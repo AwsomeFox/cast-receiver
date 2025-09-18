@@ -796,22 +796,21 @@
                     }
                 };
 
-                // Use string constants for event types (more reliable in Cast SDK v3)
-                const eventTypes = {
-                    PLAYER_LOAD_COMPLETE: 'PLAYER_LOAD_COMPLETE',
-                    PLAYING: 'PLAYING',
-                    PAUSED: 'PAUSED',
-                    IDLE: 'IDLE',
-                    TIME_UPDATE: 'TIME_UPDATE',
-                    QUEUE_CHANGE: 'QUEUE_CHANGE',
-                    ERROR: 'ERROR'
+                // Map our desired events to actual Cast SDK v3 event types
+                const eventTypeMap = {
+                    'PLAYER_LOAD_COMPLETE': 'PLAYER_LOAD_COMPLETE',  // Available
+                    'PLAYING': 'PLAYING',                            // Available
+                    'PAUSED': 'PAUSE',                               // Use PAUSE instead of PAUSED
+                    'IDLE': 'ENDED',                                 // Use ENDED instead of IDLE
+                    'TIME_UPDATE': 'TIME_UPDATE',                    // Available
+                    'QUEUE_CHANGE': 'REQUEST_QUEUE_UPDATE',          // Use queue request event
+                    'ERROR': 'ERROR'                                 // Available
                 };
 
-                // Try to get event types from framework first, fallback to string constants
+                // Get the actual event type from Cast SDK
                 const getEventType = (eventName) => {
-                    return cast.framework.events?.EventType?.[eventName] ||
-                           cast.framework.events?.[eventName] ||
-                           eventTypes[eventName];
+                    const mappedName = eventTypeMap[eventName];
+                    return cast.framework.events?.EventType?.[mappedName] || mappedName;
                 };
 
                 // Media Load Complete
@@ -838,6 +837,19 @@
                     getEventType('IDLE'),
                     (event) => this.handlePlayerIdle(event),
                     'Player Idle'
+                );
+
+                // Additional useful events
+                safeAddEventListener(
+                    cast.framework.events?.EventType?.MEDIA_STATUS,
+                    (event) => this.handleMediaStatus(event),
+                    'Media Status'
+                );
+
+                safeAddEventListener(
+                    cast.framework.events?.EventType?.MEDIA_INFORMATION_CHANGED,
+                    (event) => this.handleMediaInformationChanged(event),
+                    'Media Information Changed'
                 );
 
                 // Time Updates
@@ -1025,18 +1037,62 @@
                 this.log(`📋 Queue changed: ${event.type}`, 'info');
 
                 const queueManager = this.playerManager.getQueueManager();
-                const currentIndex = queueManager.getCurrentIndex();
+                if (queueManager) {
+                    const currentIndex = queueManager.getCurrentIndex();
 
-                if (currentIndex !== this.currentQueueIndex) {
-                    this.currentQueueIndex = currentIndex;
-                    this.updateChapterDisplay();
+                    if (currentIndex !== this.currentQueueIndex && currentIndex >= 0) {
+                        this.currentQueueIndex = currentIndex;
+                        this.updateChapterDisplay();
 
-                    // Update current chapter metadata
-                    if (this.mediaQueue[currentIndex]) {
-                        const currentMedia = this.mediaQueue[currentIndex].media;
-                        this.extractChapterData(currentMedia);
-                        this.updateCurrentChapterTitle();
+                        // Update current chapter metadata
+                        if (this.mediaQueue[currentIndex]) {
+                            const currentMedia = this.mediaQueue[currentIndex].media;
+                            this.extractChapterData(currentMedia);
+                            this.updateCurrentChapterTitle();
+                        }
                     }
+                }
+            }
+
+            handleMediaStatus(event) {
+                this.log(`📊 Media status event: ${event.mediaStatus?.playerState}`, 'info');
+
+                if (event.mediaStatus) {
+                    const playerState = event.mediaStatus.playerState;
+
+                    switch (playerState) {
+                        case 'PLAYING':
+                            this.handlePlaybackState('playing');
+                            break;
+                        case 'PAUSED':
+                            this.handlePlaybackState('paused');
+                            break;
+                        case 'IDLE':
+                            this.handlePlayerIdle({ idleReason: event.mediaStatus.idleReason });
+                            break;
+                        case 'BUFFERING':
+                            this.updateStatus('Buffering...', 'loading');
+                            break;
+                    }
+
+                    // Update queue index if available
+                    if (event.mediaStatus.currentItemIndex !== undefined) {
+                        const newIndex = event.mediaStatus.currentItemIndex;
+                        if (newIndex !== this.currentQueueIndex) {
+                            this.currentQueueIndex = newIndex;
+                            this.updateChapterDisplay();
+                        }
+                    }
+                }
+            }
+
+            handleMediaInformationChanged(event) {
+                this.log('📱 Media information changed', 'info');
+
+                const mediaInfo = this.playerManager.getMediaInformation();
+                if (mediaInfo) {
+                    this.updateMediaDisplay(mediaInfo);
+                    this.extractChapterData(mediaInfo);
                 }
             }
 
