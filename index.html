@@ -1158,6 +1158,14 @@
 
                 addLog('✅ Playback configuration applied', 'success');
 
+                // Verify Cast framework events are available
+                if (!cast.framework.events || !cast.framework.events.EventType) {
+                    throw new Error('Cast framework events not available');
+                }
+
+                const EventType = cast.framework.events.EventType;
+                addLog(`🔍 Available event types: ${Object.keys(EventType).join(', ')}`, 'debug');
+
                 // Handle skip commands from sender apps
                 playerManager.setMessageInterceptor(
                     cast.framework.messages.MessageType.SEEK,
@@ -1240,64 +1248,73 @@
                 );
 
                 // Event listeners for player state changes
-                playerManager.addEventListener(
-                    cast.framework.events.EventType.PLAYER_LOAD_COMPLETE,
-                    (event) => {
-                        addLog('✅ Media loaded successfully', 'success');
-                        setStatus('Ready', 'playing');
-                        
-                        const media = playerManager.getMediaInformation();
-                        if (media) {
-                            updateMediaDisplay(media);
+                if (EventType.PLAYER_LOAD_COMPLETE) {
+                    playerManager.addEventListener(
+                        EventType.PLAYER_LOAD_COMPLETE,
+                        (event) => {
+                            addLog('✅ Media loaded successfully', 'success');
+                            setStatus('Ready', 'playing');
+                            
+                            const media = playerManager.getMediaInformation();
+                            if (media) {
+                                updateMediaDisplay(media);
+                            }
+                            
+                            updatePlayPauseButton();
                         }
-                        
-                        updatePlayPauseButton();
-                    }
-                );
+                    );
+                }
 
-                playerManager.addEventListener(
-                    cast.framework.events.EventType.PLAYER_PLAYING,
-                    () => {
-                        addLog('▶️ Playback started', 'success');
-                        setStatus('Playing', 'playing');
-                        startProgressUpdates();
-                        updatePlayPauseButton();
-                    }
-                );
+                if (EventType.PLAYER_PLAYING) {
+                    playerManager.addEventListener(
+                        EventType.PLAYER_PLAYING,
+                        () => {
+                            addLog('▶️ Playback started', 'success');
+                            setStatus('Playing', 'playing');
+                            startProgressUpdates();
+                            updatePlayPauseButton();
+                        }
+                    );
+                }
 
-                playerManager.addEventListener(
-                    cast.framework.events.EventType.PLAYER_PAUSED,
-                    () => {
-                        addLog('⏸️ Playback paused', 'info');
-                        setStatus('Paused', 'paused');
-                        stopProgressUpdates();
-                        updatePlayPauseButton();
-                    }
-                );
+                if (EventType.PLAYER_PAUSED) {
+                    playerManager.addEventListener(
+                        EventType.PLAYER_PAUSED,
+                        () => {
+                            addLog('⏸️ Playback paused', 'info');
+                            setStatus('Paused', 'paused');
+                            stopProgressUpdates();
+                            updatePlayPauseButton();
+                        }
+                    );
+                }
 
-                playerManager.addEventListener(
-                    cast.framework.events.EventType.PLAYER_IDLE,
-                    (event) => {
-                        const reason = event.idleReason;
-                        addLog(`⏹️ Player idle: ${reason}`, 'info');
-                        setStatus('Idle', 'loading');
-                        stopProgressUpdates();
-                        updatePlayPauseButton();
-                    }
-                );
+                if (EventType.PLAYER_IDLE) {
+                    playerManager.addEventListener(
+                        EventType.PLAYER_IDLE,
+                        (event) => {
+                            const reason = event.idleReason;
+                            addLog(`⏹️ Player idle: ${reason}`, 'info');
+                            setStatus('Idle', 'loading');
+                            stopProgressUpdates();
+                            updatePlayPauseButton();
+                        }
+                    );
+                }
 
                 // Enhanced error handling
-                playerManager.addEventListener(
-                    cast.framework.events.EventType.ERROR,
-                    (errorEvent) => {
-                        const error = errorEvent.detailedErrorCode || errorEvent.error;
-                        addLog(`❌ Player error: ${JSON.stringify(error)}`, 'error');
-                        setStatus('Error', 'error');
+                if (EventType.ERROR) {
+                    playerManager.addEventListener(
+                        EventType.ERROR,
+                        (errorEvent) => {
+                            const error = errorEvent.detailedErrorCode || errorEvent.error;
+                            addLog(`❌ Player error: ${JSON.stringify(error)}`, 'error');
+                            setStatus('Error', 'error');
 
-                        // Specific error handling
-                        if (error) {
-                            if (error.code) {
-                                switch (error.code) {
+                            // Specific error handling
+                            if (error) {
+                                if (error.code) {
+                                    switch (error.code) {
                                     case 'MEDIA_UNKNOWN':
                                         addLog('🚫 Unsupported media format', 'error');
                                         break;
@@ -1319,8 +1336,10 @@
                                 addLog(`💭 Error reason: ${error.reason}`, 'error');
                             }
                         }
-                    }
-                );
+                    });
+                } else {
+                    addLog('⚠️ ERROR event type not available', 'warning');
+                }
 
                 // Start the Cast receiver with enhanced options
                 const receiverOptions = new cast.framework.CastReceiverOptions();
