@@ -253,30 +253,54 @@
             position: fixed;
             bottom: 10px;
             left: 10px;
-            max-width: 400px;
-            max-height: 150px;
-            background: rgba(0,0,0,0.9);
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 10px;
+            right: 10px;
+            max-width: none;
+            height: 40vh;
+            background: rgba(0,0,0,0.95);
+            padding: 20px;
+            border-radius: 12px;
+            font-size: 14px;
             overflow-y: auto;
             text-align: left;
-            border: 1px solid #333;
-            backdrop-filter: blur(5px);
-            font-family: 'Monaco', 'Consolas', monospace;
+            border: 2px solid #333;
+            backdrop-filter: blur(10px);
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            z-index: 1000;
         }
 
         .log-entry {
-            margin: 2px 0;
-            padding: 2px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            margin: 4px 0;
+            padding: 6px 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-radius: 4px;
+            line-height: 1.4;
         }
 
-        .log-entry.info { color: #e0e0e0; }
-        .log-entry.success { color: #4CAF50; }
-        .log-entry.warning { color: #ff9800; }
-        .log-entry.error { color: #f44336; }
-        .log-entry.debug { color: #2196F3; }
+        .log-entry.info { 
+            color: #e0e0e0; 
+            background: rgba(255,255,255,0.02);
+        }
+        .log-entry.success { 
+            color: #4CAF50; 
+            background: rgba(76,175,80,0.1);
+            border-left: 4px solid #4CAF50;
+        }
+        .log-entry.warning { 
+            color: #ff9800; 
+            background: rgba(255,152,0,0.1);
+            border-left: 4px solid #ff9800;
+        }
+        .log-entry.error { 
+            color: #f44336; 
+            background: rgba(244,67,54,0.15);
+            border-left: 4px solid #f44336;
+            font-weight: bold;
+        }
+        .log-entry.debug { 
+            color: #2196F3; 
+            background: rgba(33,150,243,0.05);
+            font-size: 12px;
+        }
 
         .connection-quality {
             position: absolute;
@@ -377,8 +401,32 @@
         </div>
     </div>
 
+    <!-- Quick Test Section for Development -->
+    <div style="position: fixed; top: 20px; right: 20px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; max-width: 300px; display: none;" id="test-panel">
+        <h4 style="color: #fff; margin-top: 0; font-size: 14px;">🧪 Quick URL Test</h4>
+        <input type="text" id="test-url" value="https://audiobookshelf.awsomefox.com/public/session/5b83663b-2834-459b-b007-c8e27df43d1d/track/1" 
+               style="width: 100%; padding: 5px; margin: 5px 0; font-size: 11px; background: #333; color: #fff; border: 1px solid #555; border-radius: 3px;">
+        <div style="margin: 5px 0;">
+            <button onclick="testQuickURL()" style="padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px;">Test URL</button>
+            <button onclick="loadTestURL()" style="padding: 5px 10px; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px;">Load & Play</button>
+            <button onclick="toggleTestPanel()" style="padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px;">Hide</button>
+        </div>
+        <div style="font-size: 10px; color: #ccc; margin-top: 5px;">
+            Press Ctrl+T to show/hide this panel
+        </div>
+    </div>
+
     <div class="debug-panel" id="debug-panel">
-        <div class="log-entry info">🚀 Cast Receiver v2024 Starting...</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid #444;">
+            <h3 style="margin: 0; color: #fff; font-size: 16px;">🔍 Cast Receiver Debug Console</h3>
+            <div>
+                <button onclick="clearDebugLog()" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 8px;">Clear</button>
+                <button onclick="toggleDebugPanel()" style="background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">Minimize</button>
+            </div>
+        </div>
+        <div id="debug-content">
+            <div class="log-entry info">🚀 Cast Receiver v2024 Starting...</div>
+        </div>
     </div>
 
     <script>
@@ -392,31 +440,57 @@
         const SKIP_BACKWARD_TIME = 10;
         const SKIP_FORWARD_TIME = 30;
 
-        // Enhanced logging system
+        // Enhanced logging system with better visibility
         function addLog(message, type = 'info') {
             const timestamp = new Date().toLocaleTimeString('en-US', {
                 hour12: false,
                 hour: '2-digit',
                 minute: '2-digit',
-                second: '2-digit'
+                second: '2-digit',
+                fractionalSecondDigits: 1
             });
 
-            const fullMessage = `${timestamp} ${message}`;
-            console.log(`[${type.toUpperCase()}] ${fullMessage}`);
+            const debugContent = document.getElementById('debug-content');
+            if (!debugContent) return;
 
-            const panel = document.getElementById('debug-panel');
-            const entry = document.createElement('div');
-            entry.className = `log-entry ${type}`;
-            entry.textContent = fullMessage;
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+            
+            debugContent.appendChild(logEntry);
+            debugContent.scrollTop = debugContent.scrollHeight;
 
-            panel.appendChild(entry);
-
-            // Keep only last 10 entries
-            while (panel.children.length > 10) {
-                panel.removeChild(panel.firstChild);
+            // Auto-trim logs to prevent memory issues (keep last 100 entries)
+            const logEntries = debugContent.getElementsByClassName('log-entry');
+            if (logEntries.length > 100) {
+                debugContent.removeChild(logEntries[0]);
             }
 
-            panel.scrollTop = panel.scrollHeight;
+            // Also log to browser console for debugging
+            console.log(`[${timestamp}] [${type.toUpperCase()}] ${message}`);
+        }
+
+        // Debug panel utility functions
+        function clearDebugLog() {
+            const debugContent = document.getElementById('debug-content');
+            if (debugContent) {
+                debugContent.innerHTML = '<div class="log-entry info">🧹 Debug log cleared</div>';
+                addLog('Debug console cleared by user', 'info');
+            }
+        }
+
+        function toggleDebugPanel() {
+            const debugPanel = document.getElementById('debug-panel');
+            const debugContent = document.getElementById('debug-content');
+            
+            if (debugContent.style.display === 'none') {
+                debugContent.style.display = 'block';
+                debugPanel.style.height = '40vh';
+                addLog('Debug panel expanded', 'info');
+            } else {
+                debugContent.style.display = 'none';
+                debugPanel.style.height = 'auto';
+            }
         }
 
         // Configuration - These would be passed via customData in load request
@@ -1277,42 +1351,187 @@
                             const urlToTest = mediaInfo.contentId.split('#')[0];
                             addLog(`🔗 Base URL to test: ${urlToTest}`, 'debug');
                             
-                            // Enhanced accessibility check with detailed logging
-                            fetch(urlToTest, { 
-                                method: 'HEAD',
-                                mode: 'cors'  // Test CORS explicitly
-                            })
-                                .then(response => {
-                                    if (response.ok) {
-                                        addLog(`✅ Content URL is accessible (${response.status} ${response.statusText})`, 'success');
-                                        addLog(`📋 Response headers:`, 'debug');
+                            // Check if this is a public session URL (no auth needed)
+                            const isPublicSession = urlToTest.includes('/public/session/');
+                            addLog(`🔓 Public session URL: ${isPublicSession}`, 'debug');
+                            
+                            // Enhanced accessibility check with comprehensive testing
+                            const performDetailedURLTest = async () => {
+                                try {
+                                    // Test 1: HEAD request (what Cast receiver does first)
+                                    addLog(`📡 Test 1/4: HEAD request...`, 'info');
+                                    const headOptions = { 
+                                        method: 'HEAD',
+                                        mode: 'cors',
+                                        credentials: 'omit'
+                                    };
+                                    
+                                    // For non-public URLs, add auth if available
+                                    if (!isPublicSession && AUDIOBOOKSHELF_CONFIG.token) {
+                                        headOptions.headers = {
+                                            'Authorization': `Bearer ${AUDIOBOOKSHELF_CONFIG.token}`
+                                        };
+                                        addLog(`🔑 Adding auth header for non-public URL`, 'debug');
+                                    }
+                                    
+                                    const headResponse = await fetch(urlToTest, headOptions);
+                                    
+                                    if (headResponse.ok) {
+                                        addLog(`✅ HEAD successful: ${headResponse.status} ${headResponse.statusText}`, 'success');
                                         
-                                        // Log important headers for debugging
-                                        const importantHeaders = ['content-type', 'content-length', 'access-control-allow-origin', 'accept-ranges'];
-                                        importantHeaders.forEach(header => {
-                                            const value = response.headers.get(header);
-                                            if (value) {
-                                                addLog(`   ${header}: ${value}`, 'debug');
+                                        // Log all response headers for comprehensive debugging
+                                        addLog(`📋 Response headers:`, 'debug');
+                                        for (const [key, value] of headResponse.headers.entries()) {
+                                            addLog(`   ${key}: ${value}`, 'debug');
+                                        }
+                                        
+                                        // Validate critical headers
+                                        const contentType = headResponse.headers.get('content-type');
+                                        const contentLength = headResponse.headers.get('content-length');
+                                        const corsOrigin = headResponse.headers.get('access-control-allow-origin');
+                                        
+                                        if (contentType && contentType.startsWith('audio/')) {
+                                            addLog(`🎵 Valid audio content type: ${contentType}`, 'success');
+                                        } else {
+                                            addLog(`⚠️ Unexpected content type: ${contentType || 'unknown'}`, 'warning');
+                                        }
+                                        
+                                        if (contentLength) {
+                                            const sizeMB = Math.round(parseInt(contentLength) / 1024 / 1024);
+                                            addLog(`📏 Content size: ${sizeMB}MB`, 'info');
+                                        }
+                                        
+                                        if (corsOrigin === '*') {
+                                            addLog(`🌐 CORS properly configured for Cast`, 'success');
+                                        } else if (corsOrigin) {
+                                            addLog(`🌐 CORS origin: ${corsOrigin}`, 'warning');
+                                        } else {
+                                            addLog(`❌ Missing CORS headers - may cause Cast failure`, 'error');
+                                        }
+                                        
+                                    } else {
+                                        addLog(`❌ HEAD failed: ${headResponse.status} ${headResponse.statusText}`, 'error');
+                                        addLog(`🔧 This WILL cause Error 905 (LOAD_FAILED)`, 'error');
+                                        
+                                        // Get response body for 404 errors to understand what's happening
+                                        if (headResponse.status === 404) {
+                                            try {
+                                                const errorText = await headResponse.text();
+                                                addLog(`📄 404 response body: ${errorText}`, 'error');
+                                            } catch (e) {
+                                                addLog(`📄 Could not read 404 response body`, 'debug');
+                                            }
+                                        }
+                                        return;
+                                    }
+                                    
+                                    // Test 2: CORS preflight for actual GET request
+                                    addLog(`🌐 Test 2/4: CORS preflight...`, 'info');
+                                    try {
+                                        const corsResponse = await fetch(urlToTest, {
+                                            method: 'OPTIONS',
+                                            mode: 'cors',
+                                            headers: {
+                                                'Origin': 'https://cast-receiver.cast-device',
+                                                'Access-Control-Request-Method': 'GET',
+                                                'Access-Control-Request-Headers': 'Range'
                                             }
                                         });
-                                    } else {
-                                        addLog(`⚠️ Content URL returned status ${response.status} ${response.statusText}`, 'warning');
-                                        addLog(`💡 This may cause Error 905 (LOAD_FAILED)`, 'warning');
-                                    }
-                                })
-                                .catch(error => {
-                                    addLog(`❌ Content URL test failed: ${error.message}`, 'error');
-                                    addLog(`💡 Error details: ${error.name} - ${error.stack}`, 'error');
-                                    
-                                    // Provide specific guidance based on error type
-                                    if (error.name === 'TypeError' && error.message.includes('CORS')) {
-                                        addLog(`🚫 CORS Error: Server must include 'Access-Control-Allow-Origin: *' header`, 'error');
-                                    } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-                                        addLog(`🌐 Network Error: URL may be unreachable or blocked`, 'error');
+                                        addLog(`✅ CORS preflight: ${corsResponse.status}`, corsResponse.ok ? 'success' : 'warning');
+                                    } catch (corsError) {
+                                        addLog(`⚠️ CORS preflight failed: ${corsError.message}`, 'warning');
                                     }
                                     
-                                    addLog(`🔧 This WILL cause Error 905 - check server configuration and URL accessibility`, 'error');
-                                });
+                                    // Test 3: Range request (simulates media loading)
+                                    addLog(`📥 Test 3/4: Range request (simulating media loading)...`, 'info');
+                                    try {
+                                        const rangeOptions = {
+                                            method: 'GET',
+                                            mode: 'cors',
+                                            headers: {
+                                                'Range': 'bytes=0-1023'
+                                            }
+                                        };
+                                        
+                                        if (!isPublicSession && AUDIOBOOKSHELF_CONFIG.token) {
+                                            rangeOptions.headers['Authorization'] = `Bearer ${AUDIOBOOKSHELF_CONFIG.token}`;
+                                        }
+                                        
+                                        const rangeResponse = await fetch(urlToTest, rangeOptions);
+                                        
+                                        if (rangeResponse.ok || rangeResponse.status === 206) {
+                                            addLog(`✅ Range request successful: ${rangeResponse.status}`, 'success');
+                                            
+                                            // Read the sample content and analyze
+                                            const sample = await rangeResponse.arrayBuffer();
+                                            addLog(`📊 Downloaded ${sample.byteLength} bytes for analysis`, 'debug');
+                                            
+                                            // Basic audio format detection
+                                            const view = new Uint8Array(sample);
+                                            if (view.length >= 8) {
+                                                const header = Array.from(view.slice(0, 8)).map(b => 
+                                                    b.toString(16).padStart(2, '0')).join(' ');
+                                                addLog(`🎵 File header bytes: ${header}`, 'debug');
+                                                
+                                                // Audio format detection
+                                                if (view[0] === 0xFF && (view[1] & 0xE0) === 0xE0) {
+                                                    addLog(`🎵 Detected: MP3 format`, 'success');
+                                                } else if (view[4] === 0x66 && view[5] === 0x74 && view[6] === 0x79 && view[7] === 0x70) {
+                                                    addLog(`🎵 Detected: MP4/M4A container`, 'success');
+                                                } else if (view[0] === 0x4F && view[1] === 0x67 && view[2] === 0x67 && view[3] === 0x53) {
+                                                    addLog(`🎵 Detected: OGG format`, 'success');
+                                                } else {
+                                                    addLog(`❓ Unknown audio format - may still work`, 'warning');
+                                                }
+                                            }
+                                            
+                                        } else {
+                                            addLog(`❌ Range request failed: ${rangeResponse.status}`, 'error');
+                                            addLog(`💡 Cast media loading uses range requests and will fail`, 'error');
+                                        }
+                                    } catch (rangeError) {
+                                        addLog(`💥 Range request error: ${rangeError.message}`, 'error');
+                                    }
+                                    
+                                    // Test 4: Full URL validation
+                                    addLog(`🔍 Test 4/4: URL structure validation...`, 'info');
+                                    try {
+                                        const urlObj = new URL(urlToTest);
+                                        addLog(`✅ Valid URL structure`, 'success');
+                                        addLog(`   Protocol: ${urlObj.protocol}`, 'debug');
+                                        addLog(`   Host: ${urlObj.hostname}:${urlObj.port || 'default'}`, 'debug');
+                                        addLog(`   Path: ${urlObj.pathname}`, 'debug');
+                                        
+                                        // Validate session ID format if it's a public session
+                                        if (isPublicSession) {
+                                            const sessionMatch = urlObj.pathname.match(/\/public\/session\/([a-f0-9-]+)\//);
+                                            if (sessionMatch) {
+                                                const sessionId = sessionMatch[1];
+                                                const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+                                                if (uuidRegex.test(sessionId)) {
+                                                    addLog(`✅ Valid session ID format: ${sessionId}`, 'success');
+                                                } else {
+                                                    addLog(`❌ Invalid session ID format: ${sessionId}`, 'error');
+                                                }
+                                            }
+                                        }
+                                    } catch (urlError) {
+                                        addLog(`❌ Invalid URL: ${urlError.message}`, 'error');
+                                    }
+                                    
+                                    addLog(`🏁 URL testing complete - check results above`, 'info');
+                                    
+                                } catch (error) {
+                                    addLog(`💥 URL testing failed: ${error.message}`, 'error');
+                                    addLog(`💡 Error type: ${error.name}`, 'error');
+                                    if (error.stack) {
+                                        addLog(`🔍 Stack trace: ${error.stack}`, 'debug');
+                                    }
+                                }
+                            };
+                            
+                            // Run the comprehensive test asynchronously
+                            performDetailedURLTest();
                         }
 
                         // Handle custom audiobook data
@@ -1362,9 +1581,24 @@
                                     new URL(customData.originalUri);
                                     loadRequest.media.contentId = customData.originalUri;
                                     addLog(`✅ Custom URI is valid and applied`, 'success');
+                                    
+                                    // Log URI details for debugging
+                                    const isPublicSession = customData.originalUri.includes('/public/session/');
+                                    const hasSessionId = /\/public\/session\/([a-f0-9-]+)\//.test(customData.originalUri);
+                                    addLog(`📋 URI analysis: public=${isPublicSession}, hasSessionId=${hasSessionId}`, 'debug');
+                                    
                                 } catch (urlError) {
                                     addLog(`❌ Invalid original URI: ${urlError.message}`, 'error');
                                     addLog(`🔧 Keeping original content ID: ${mediaInfo.contentId}`, 'warning');
+                                }
+                            } else {
+                                // If no originalUri, check if contentId needs processing
+                                const contentId = mediaInfo.contentId;
+                                if (contentId.includes('#')) {
+                                    const baseUrl = contentId.split('#')[0];
+                                    addLog(`🔗 No originalUri, extracting base URL: ${baseUrl}`, 'debug');
+                                    loadRequest.media.contentId = baseUrl;
+                                    addLog(`✅ Using extracted base URL as content ID`, 'info');
                                 }
                             }
 
@@ -1678,6 +1912,91 @@
             const qualities = ['EXCELLENT', 'GOOD', 'FAIR', 'POOR'];
             qualityText.textContent = qualities[activeCount - 1];
         }, 5000);
+
+        // Quick Test Functions for Development
+        function toggleTestPanel() {
+            const panel = document.getElementById('test-panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function testQuickURL() {
+            const url = document.getElementById('test-url').value;
+            if (!url) {
+                addLog('❌ No test URL provided', 'error');
+                return;
+            }
+
+            addLog(`🧪 Quick testing URL: ${url}`, 'info');
+            
+            try {
+                // Test HEAD request
+                const headResponse = await fetch(url, { method: 'HEAD', mode: 'cors' });
+                if (headResponse.ok) {
+                    addLog(`✅ Quick test successful: ${headResponse.status}`, 'success');
+                    addLog(`📋 Content-Type: ${headResponse.headers.get('content-type')}`, 'debug');
+                    addLog(`📏 Content-Length: ${headResponse.headers.get('content-length')}`, 'debug');
+                    addLog(`🌐 CORS: ${headResponse.headers.get('access-control-allow-origin')}`, 'debug');
+                } else {
+                    addLog(`❌ Quick test failed: ${headResponse.status} ${headResponse.statusText}`, 'error');
+                }
+            } catch (error) {
+                addLog(`💥 Quick test error: ${error.message}`, 'error');
+            }
+        }
+
+        function loadTestURL() {
+            const url = document.getElementById('test-url').value;
+            if (!url) {
+                addLog('❌ No test URL provided', 'error');
+                return;
+            }
+
+            addLog(`🎵 Loading test URL directly into Cast receiver...`, 'info');
+            
+            // Create a minimal media info object
+            const mediaInfo = new cast.framework.messages.MediaInformation();
+            mediaInfo.contentId = url;
+            mediaInfo.contentType = 'audio/mp4'; // Assume MP4 based on your test
+            mediaInfo.metadata = new cast.framework.messages.MusicTrackMediaMetadata();
+            mediaInfo.metadata.title = 'Test Audio from URL';
+            mediaInfo.metadata.artist = 'Audiobookshelf Cast Test';
+
+            // Create load request
+            const loadRequest = new cast.framework.messages.LoadRequestData();
+            loadRequest.media = mediaInfo;
+            loadRequest.autoplay = true;
+
+            // Load the media
+            if (playerManager) {
+                addLog(`📥 Sending LOAD request to player manager...`, 'debug');
+                playerManager.load(loadRequest).then(() => {
+                    addLog(`✅ Load request sent successfully`, 'success');
+                }).catch((error) => {
+                    addLog(`❌ Load request failed: ${error.message}`, 'error');
+                });
+            } else {
+                addLog(`❌ Player manager not initialized`, 'error');
+            }
+        }
+
+        // Keyboard shortcuts for development
+        document.addEventListener('keydown', (event) => {
+            if (event.ctrlKey && event.key === 't') {
+                event.preventDefault();
+                toggleTestPanel();
+            }
+        });
+
+        // Show test panel initially for development
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const testPanel = document.getElementById('test-panel');
+                if (testPanel) {
+                    testPanel.style.display = 'block';
+                    addLog('🧪 Test panel available - press Ctrl+T to toggle', 'info');
+                }
+            }, 2000);
+        });
 
     </script>
 </body>
