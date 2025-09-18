@@ -1,11 +1,6 @@
-<svg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox='0 0 192 192'>
-  <defs>
-    <linearGradient id='bg' x1='0%' y1='0%' x2='100%' y2='100%'>
-      <stop offset='0%' style='stop-color:#1e3c72'/>
-      <stop offset='100%' style='stop-color:#2a5298'/>
-    </linearGradient>
-  </defs>
-  <rect width='192' height='192' fill='url(#bg)'/>
-  <circle cx='96' cy='96' r='40' fill='none' stroke='white' stroke-width='4'/>
-  <path d='M80 80 L80 112 L112 96 Z' fill='white'/>
+<svg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox="0 0 24 24" fill="currentColor">
+  <path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/>
+  <!-- Audio waves -->
+  <path d="M14 8.5c0-.83-.67-1.5-1.5-1.5S11 7.67 11 8.5s.67 1.5 1.5 1.5S14 9.33 14 8.5z"/>
+  <path d="M16 6.5c0-1.38-1.12-2.5-2.5-2.5S11 5.12 11 6.5"/>
 </svg>

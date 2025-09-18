@@ -1,33 +1,103 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Custom Cast Receiver</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="manifest" href="manifest.json">
+    <title>Audiobook Receiver</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: white;
+            font-family: 'Roboto', sans-serif;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+            padding: 20px;
+        }
+        h1, h2 {
+            margin: 0;
+            padding: 5px;
+        }
+        .media-info {
+            max-width: 80%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .controls {
+            margin-top: 20px;
+        }
+        button {
+            background-color: #333;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+    </style>
+    <script src="//www.gstatic.com/cast/sdk/libs/caf/receiver/3.0.0/cast_receiver_framework.js"></script>
 </head>
 <body>
-    <div id="player-container">
-        <div id="media-info">
-            <div id="title">Cast Receiver Ready</div>
-            <div id="subtitle">Waiting for content...</div>
-        </div>
-        <div id="media-element-container">
-            <video id="media-element" autoplay playsinline></video>
-        </div>
-        <div id="progress-bar">
-            <div id="progress-fill"></div>
-        </div>
-        <div id="controls">
-            <div id="play-pause-button">⏸️</div>
-            <div id="current-time">00:00</div>
-            <div id="total-time">00:00</div>
-        </div>
+    <div class="media-info">
+        <h1 id="chapter-title">Ready...</h1>
+        <h2 id="book-title"></h2>
     </div>
 
-    <!-- Google Cast SDK -->
-    <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
-    <script src="receiver.js"></script>
+    <script>
+        const context = cast.framework.CastReceiverContext.getInstance();
+        const playerManager = context.getPlayerManager();
+
+        // 1. Intercept LOAD requests to handle custom clipping data
+        playerManager.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, (request) => {
+            const mediaInfo = request.media;
+            const customData = mediaInfo.customData;
+
+            // Check for our custom audiobook data
+            if (customData && customData.startMs != null && customData.endMs != null) {
+                const originalUri = customData.originalUri;
+                const startMs = customData.startMs;
+                const endMs = customData.endMs;
+
+                // Adjust the request for the Cast player
+                request.media.contentId = originalUri;
+                request.media.startTime = startMs;
+                request.media.endTime = endMs;
+
+                // Update UI elements with chapter and book titles
+                const chapterTitle = mediaInfo.metadata.title;
+                const bookTitle = mediaInfo.metadata.albumTitle;
+                document.getElementById('chapter-title').textContent = chapterTitle;
+                document.getElementById('book-title').textContent = bookTitle;
+            } else {
+                // Handle standard media items
+                document.getElementById('chapter-title').textContent = mediaInfo.metadata?.title || 'Unknown Title';
+                document.getElementById('book-title').textContent = mediaInfo.metadata?.albumTitle || '';
+            }
+
+            // Return the modified request
+            return request;
+        });
+
+        // 2. Add extra controls and commands
+        const playbackConfig = new cast.framework.PlaybackConfig();
+
+        // Enable custom skip commands
+        playbackConfig.supportedCommands = cast.framework.messages.Command.PAUSE |
+                                          cast.framework.messages.Command.STOP |
+                                          cast.framework.messages.Command.PLAY |
+                                          cast.framework.messages.Command.SEEK |
+                                          cast.framework.messages.Command.NEXT |
+                                          cast.framework.messages.Command.PREVIOUS |
+                                          cast.framework.messages.Command.SKIP_FORWARD |
+                                          cast.framework.messages.Command.SKIP_BACKWARD;
+
+        // Set the seek jump for skip buttons (e.g., 30 seconds)
+        playbackConfig.skipForwardDuration = 30; // in seconds
+        playbackConfig.skipBackwardDuration = 30; // in seconds
+
+        context.start({ playbackConfig: playbackConfig });
+    </script>
 </body>
 </html>
