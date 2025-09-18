@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Audiobook Receiver</title>
+    <title>Audiobookshelf Cast Receiver v2024 - Modern</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
-            background-color: #121212;
+            background: radial-gradient(ellipse at center, #1e1e1e 0%, #0a0a0a 100%);
             color: white;
-            font-family: 'Roboto', sans-serif;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
             text-align: center;
             display: flex;
             justify-content: center;
@@ -14,104 +16,1198 @@
             height: 100vh;
             flex-direction: column;
             padding: 20px;
-        }
-        h1, h2 {
             margin: 0;
-            padding: 5px;
-        }
-        .media-info {
-            max-width: 80%;
             overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
         }
-        .controls {
-            margin-top: 20px;
+        
+        .receiver-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 80%;
+            animation: slideIn 0.8s ease-out;
         }
-        button {
-            background-color: #333;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            margin: 5px;
-            cursor: pointer;
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .media-artwork {
+            width: 280px;
+            height: 280px;
+            border-radius: 16px;
+            margin-bottom: 40px;
+            background: linear-gradient(135deg, #333, #666);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px;
+            color: #999;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.5s ease;
+        }
+        
+        .media-artwork::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, 
+                transparent 30%, 
+                rgba(255,255,255,0.05) 50%, 
+                transparent 70%);
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .media-artwork img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 16px;
+            z-index: 1;
+            position: relative;
+        }
+        
+        .media-content {
+            text-align: center;
+            max-width: 100%;
+        }
+        
+        .media-title {
+            font-size: 2.8em;
+            font-weight: 600;
+            margin: 0 0 16px 0;
+            text-shadow: 0 3px 6px rgba(0,0,0,0.6);
+            line-height: 1.2;
+            background: linear-gradient(45deg, #fff, #e0e0e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .media-subtitle {
+            font-size: 1.6em;
+            color: #ddd;
+            margin: 0 0 8px 0;
+            font-weight: 400;
+            opacity: 0.9;
+        }
+        
+        .media-author {
+            font-size: 1.2em;
+            color: #bbb;
+            margin: 0 0 30px 0;
+            font-style: italic;
+            opacity: 0.8;
+        }
+        
+        .playback-controls {
+            width: 100%;
+            max-width: 500px;
+            margin: 20px 0;
+        }
+        
+        .progress-section {
+            margin-bottom: 20px;
+        }
+        
+        .progress-track {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 12px;
+            position: relative;
+        }
+        
+        .progress-indicator {
+            height: 100%;
+            background: linear-gradient(90deg, #00c4ff, #0099cc);
+            width: 0%;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 10px rgba(0, 196, 255, 0.3);
+        }
+        
+        .progress-indicator::after {
+            content: '';
+            position: absolute;
+            right: -4px;
+            top: -2px;
+            width: 12px;
+            height: 12px;
+            background: #00c4ff;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(0, 196, 255, 0.6);
+        }
+        
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1em;
+            color: #ccc;
+            font-variant-numeric: tabular-nums;
+            font-weight: 500;
+        }
+        
+        .status-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            background: rgba(0,0,0,0.7);
+            border-radius: 20px;
+            font-size: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .status-playing { color: #4CAF50; }
+        .status-paused { color: #ff9800; }
+        .status-loading { color: #2196F3; }
+        .status-error { color: #f44336; }
+        
+        .debug-panel {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            max-width: 400px;
+            max-height: 150px;
+            background: rgba(0,0,0,0.9);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 10px;
+            overflow-y: auto;
+            text-align: left;
+            border: 1px solid #333;
+            backdrop-filter: blur(5px);
+            font-family: 'Monaco', 'Consolas', monospace;
+        }
+        
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .log-entry.info { color: #e0e0e0; }
+        .log-entry.success { color: #4CAF50; }
+        .log-entry.warning { color: #ff9800; }
+        .log-entry.error { color: #f44336; }
+        .log-entry.debug { color: #2196F3; }
+        
+        .connection-quality {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .connection-bars {
+            display: flex;
+            gap: 2px;
+            margin-bottom: 5px;
+        }
+        
+        .bar {
+            width: 3px;
+            background: #333;
+            border-radius: 1px;
+        }
+        
+        .bar:nth-child(1) { height: 6px; }
+        .bar:nth-child(2) { height: 10px; }
+        .bar:nth-child(3) { height: 14px; }
+        .bar:nth-child(4) { height: 18px; }
+        
+        .bar.active { background: #4CAF50; }
+        
+        .quality-text {
+            font-size: 10px;
+            color: #999;
+            font-weight: 500;
+        }
+        
+        @media (max-width: 768px) {
+            .media-title { font-size: 2.2em; }
+            .media-subtitle { font-size: 1.3em; }
+            .media-artwork { width: 200px; height: 200px; }
+            .debug-panel { font-size: 9px; max-width: 300px; }
         }
     </style>
-    <script
-      src="//www.gstatic.com/cast/sdk/libs/caf/receiver/3.0.0/cast_receiver_framework.js"
-      data-cfasync="false">
-    </script>
+    <!-- Use the latest Cast Application Framework -->
+    <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
 </head>
 <body>
-    <div class="media-info">
-        <h1 id="chapter-title">Ready...</h1>
-        <h2 id="book-title"></h2>
+    <div class="connection-quality">
+        <div class="connection-bars">
+            <div class="bar active"></div>
+            <div class="bar active"></div>
+            <div class="bar active"></div>
+            <div class="bar"></div>
+        </div>
+        <div class="quality-text">CAST READY</div>
+    </div>
+    
+    <div class="status-indicator">
+        <span id="status-text" class="status-loading">Initializing...</span>
+    </div>
+    
+    <div class="receiver-container">
+        <div class="media-artwork" id="artwork">
+            📚
+        </div>
+        
+        <div class="media-content">
+            <h1 class="media-title" id="title">Audiobookshelf</h1>
+            <h2 class="media-subtitle" id="subtitle">Cast Receiver Ready</h2>
+            <p class="media-author" id="author">Waiting for media...</p>
+        </div>
+        
+        <div class="playback-controls" id="controls" style="display: none;">
+            <div class="progress-section">
+                <div class="progress-track">
+                    <div class="progress-indicator" id="progress"></div>
+                </div>
+                <div class="time-display">
+                    <span id="current-time">0:00:00</span>
+                    <span id="total-time">0:00:00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="debug-panel" id="debug-panel">
+        <div class="log-entry info">🚀 Cast Receiver v2024 Starting...</div>
     </div>
 
-    <script data-cfasync="false">
-        // Wait for Cast SDK to load
-        function initializeCast() {
-            if (typeof cast === 'undefined') {
-                setTimeout(initializeCast, 100);
+    <script>
+        let playerManager;
+        let currentMedia = null;
+        let progressUpdateInterval;
+        let mediaManager;
+        
+        // Enhanced logging system
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('en-US', { 
+                hour12: false, 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+            });
+            
+            const fullMessage = `${timestamp} ${message}`;
+            console.log(`[${type.toUpperCase()}] ${fullMessage}`);
+            
+            const panel = document.getElementById('debug-panel');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = fullMessage;
+            
+            panel.appendChild(entry);
+            
+            // Keep only last 10 entries
+            while (panel.children.length > 10) {
+                panel.removeChild(panel.firstChild);
+            }
+            
+            panel.scrollTop = panel.scrollHeight;
+        }
+
+        // Configuration - These would be passed via customData in load request
+        let AUDIOBOOKSHELF_CONFIG = {
+            serverUrl: '',
+            token: '',
+            libraryId: ''
+        };
+
+        // API helper functions using existing Audiobookshelf endpoints
+        async function fetchFromAPI(endpoint, options = {}) {
+            try {
+                if (!AUDIOBOOKSHELF_CONFIG.serverUrl) {
+                    throw new Error('Server URL not configured');
+                }
+
+                const url = `${AUDIOBOOKSHELF_CONFIG.serverUrl}${endpoint}`;
+                const headers = {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                };
+
+                if (AUDIOBOOKSHELF_CONFIG.token) {
+                    headers['Authorization'] = `Bearer ${AUDIOBOOKSHELF_CONFIG.token}`;
+                }
+
+                const response = await fetch(url, {
+                    ...options,
+                    headers
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                addLog(`API fetch error: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        function setStatus(text, type = 'loading') {
+            const statusElement = document.getElementById('status-text');
+            statusElement.textContent = text;
+            statusElement.className = `status-${type}`;
+        }
+
+        function formatDuration(seconds) {
+            if (!seconds || isNaN(seconds) || seconds < 0) return '0:00:00';
+            
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            
+            if (hours > 0) {
+                return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+            return `${minutes}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateMediaDisplay(mediaInfo) {
+            if (!mediaInfo || !mediaInfo.metadata) {
+                addLog('No media metadata to display', 'warning');
                 return;
             }
 
-            const context = cast.framework.CastReceiverContext.getInstance();
-            const playerManager = context.getPlayerManager();
+            const metadata = mediaInfo.metadata;
+            currentMedia = mediaInfo;
 
-            // 1. Intercept LOAD requests to handle custom clipping data
-            playerManager.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, (request) => {
-                const mediaInfo = request.media;
-                const customData = mediaInfo.customData;
+            // Update text content
+            const title = metadata.title || 'Unknown Title';
+            const subtitle = metadata.subtitle || metadata.albumName || '';
+            const author = metadata.artist || metadata.albumArtist || '';
 
-                // Check for our custom audiobook data
-                if (customData && customData.startMs != null && customData.endMs != null) {
-                    const originalUri = customData.originalUri;
-                    const startMs = customData.startMs;
-                    const endMs = customData.endMs;
+            document.getElementById('title').textContent = title;
+            document.getElementById('subtitle').textContent = subtitle;
+            document.getElementById('author').textContent = author;
 
-                    // Adjust the request for the Cast player
-                    request.media.contentId = originalUri;
-                    request.media.startTime = startMs;
-                    request.media.endTime = endMs;
+            addLog(`📖 Now showing: "${title}"${subtitle ? ' - ' + subtitle : ''}`, 'success');
 
-                    // Update UI elements with chapter and book titles
-                    const chapterTitle = mediaInfo.metadata.title;
-                    const bookTitle = mediaInfo.metadata.albumTitle;
-                    document.getElementById('chapter-title').textContent = chapterTitle;
-                    document.getElementById('book-title').textContent = bookTitle;
-                } else {
-                    // Handle standard media items
-                    document.getElementById('chapter-title').textContent = mediaInfo.metadata?.title || 'Unknown Title';
-                    document.getElementById('book-title').textContent = mediaInfo.metadata?.albumTitle || '';
-                }
+            // Handle artwork with error handling
+            const artworkElement = document.getElementById('artwork');
+            if (metadata.images && metadata.images.length > 0) {
+                const imageUrl = metadata.images[0].url;
+                addLog(`🖼️ Loading artwork: ${imageUrl}`, 'debug');
+                
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                
+                img.onload = function() {
+                    artworkElement.innerHTML = '';
+                    artworkElement.appendChild(img);
+                    addLog('✅ Artwork loaded successfully', 'success');
+                };
+                
+                img.onerror = function() {
+                    addLog('❌ Failed to load artwork, using fallback', 'warning');
+                    artworkElement.innerHTML = '📚';
+                };
+                
+                img.src = imageUrl;
+            } else {
+                addLog('ℹ️ No artwork provided, using default', 'info');
+                artworkElement.innerHTML = '📚';
+            }
 
-                // Return the modified request
-                return request;
-            });
-
-            // 2. Add extra controls and commands
-            const playbackConfig = new cast.framework.PlaybackConfig();
-
-            // Enable custom skip commands
-            playbackConfig.supportedCommands = cast.framework.messages.Command.PAUSE |
-                                              cast.framework.messages.Command.STOP |
-                                              cast.framework.messages.Command.PLAY |
-                                              cast.framework.messages.Command.SEEK |
-                                              cast.framework.messages.Command.NEXT |
-                                              cast.framework.messages.Command.PREVIOUS |
-                                              cast.framework.messages.Command.SKIP_FORWARD |
-                                              cast.framework.messages.Command.SKIP_BACKWARD;
-
-            // Set the seek jump for skip buttons (e.g., 30 seconds)
-            playbackConfig.skipForwardDuration = 30; // in seconds
-            playbackConfig.skipBackwardDuration = 30; // in seconds
-
-            context.start({ playbackConfig: playbackConfig });
+            // Show playback controls
+            document.getElementById('controls').style.display = 'block';
         }
 
-        // Start initialization
-        initializeCast();
+        function updateProgress() {
+            if (!playerManager) return;
+
+            const currentTime = playerManager.getCurrentTimeSec();
+            const duration = playerManager.getDurationSec();
+
+            if (currentTime !== undefined && duration !== undefined && duration > 0) {
+                const progressPercent = (currentTime / duration) * 100;
+                document.getElementById('progress').style.width = `${Math.min(100, Math.max(0, progressPercent))}%`;
+                document.getElementById('current-time').textContent = formatDuration(currentTime);
+                document.getElementById('total-time').textContent = formatDuration(duration);
+            }
+        }
+
+        function startProgressUpdates() {
+            if (progressUpdateInterval) {
+                clearInterval(progressUpdateInterval);
+            }
+            
+            progressUpdateInterval = setInterval(updateProgress, 500);
+            addLog('⏱️ Progress tracking started', 'debug');
+        }
+
+        function stopProgressUpdates() {
+            if (progressUpdateInterval) {
+                clearInterval(progressUpdateInterval);
+                progressUpdateInterval = null;
+                addLog('⏱️ Progress tracking stopped', 'debug');
+            }
+        }
+
+        function setupMediaBrowseSupport() {
+            try {
+                addLog('🗂️ Setting up Media Browse API support...', 'info');
+
+                const context = cast.framework.CastReceiverContext.getInstance();
+                mediaManager = new cast.framework.MediaManager(playerManager);
+
+                // Configure browse content
+                const browseConfig = {
+                    // Root browse items
+                    rootItems: [
+                        {
+                            entity: 'library',
+                            title: 'Library',
+                            subtitle: 'Browse your audiobook library',
+                            image: {
+                                url: 'https://cast.awsomefox.com/assets/library-icon.png',
+                                width: 200,
+                                height: 200
+                            },
+                            browsable: true
+                        },
+                        {
+                            entity: 'recent',
+                            title: 'Recently Played',
+                            subtitle: 'Your recent audiobooks',
+                            image: {
+                                url: 'https://cast.awsomefox.com/assets/recent-icon.png',
+                                width: 200,
+                                height: 200
+                            },
+                            browsable: true
+                        },
+                        {
+                            entity: 'collections',
+                            title: 'Collections',
+                            subtitle: 'Browse by collection',
+                            image: {
+                                url: 'https://cast.awsomefox.com/assets/collections-icon.png',
+                                width: 200,
+                                height: 200
+                            },
+                            browsable: true
+                        },
+                        {
+                            entity: 'authors',
+                            title: 'Authors',
+                            subtitle: 'Browse by author',
+                            image: {
+                                url: 'https://cast.awsomefox.com/assets/authors-icon.png',
+                                width: 200,
+                                height: 200
+                            },
+                            browsable: true
+                        },
+                        {
+                            entity: 'series',
+                            title: 'Series',
+                            subtitle: 'Browse by series',
+                            image: {
+                                url: 'https://cast.awsomefox.com/assets/series-icon.png',
+                                width: 200,
+                                height: 200
+                            },
+                            browsable: true
+                        }
+                    ]
+                };
+
+                // Handle browse requests
+                mediaManager.setBrowseContentCallback((browseRequest) => {
+                    addLog(`🔍 Browse request: ${JSON.stringify(browseRequest)}`, 'debug');
+
+                    const entity = browseRequest.entity;
+                    const parentEntity = browseRequest.parentEntity;
+
+                    // Handle different browse contexts
+                    switch (entity) {
+                        case 'library':
+                            return handleLibraryBrowse(browseRequest);
+                        
+                        case 'recent':
+                            return handleRecentBrowse(browseRequest);
+                        
+                        case 'collections':
+                            return handleCollectionsBrowse(browseRequest);
+                        
+                        case 'authors':
+                            return handleAuthorsBrowse(browseRequest);
+                        
+                        case 'series':
+                            return handleSeriesBrowse(browseRequest);
+                        
+                        default:
+                            // Handle specific item browsing (e.g., books by author)
+                            return handleSpecificBrowse(browseRequest);
+                    }
+                });
+
+                // Set the browse content
+                mediaManager.setBrowseContent(browseConfig);
+                
+                addLog('✅ Media Browse API configured successfully', 'success');
+
+            } catch (error) {
+                addLog(`❌ Error setting up Media Browse: ${error.message}`, 'error');
+            }
+        }
+
+        function handleLibraryBrowse(request) {
+            addLog('📚 Handling library browse request', 'info');
+            
+            if (!AUDIOBOOKSHELF_CONFIG.libraryId) {
+                addLog('No library ID configured', 'warning');
+                return Promise.resolve({ items: [] });
+            }
+
+            // Use existing endpoint: /api/libraries/{libraryId}/items?limit=100&minified=1
+            return fetchFromAPI(`/api/libraries/${AUDIOBOOKSHELF_CONFIG.libraryId}/items?limit=50&minified=1`)
+                .then(data => {
+                    const items = (data.results || []).map(book => ({
+                        entity: `book_${book.id}`,
+                        title: book.media?.metadata?.title || 'Unknown Title',
+                        subtitle: book.media?.metadata?.authors?.join(', ') || '',
+                        description: book.media?.metadata?.description || '',
+                        image: {
+                            url: `${AUDIOBOOKSHELF_CONFIG.serverUrl}/api/items/${book.id}/cover`,
+                            width: 300,
+                            height: 400
+                        },
+                        playable: true,
+                        contentId: `${AUDIOBOOKSHELF_CONFIG.serverUrl}/api/items/${book.id}/play`,
+                        contentType: 'audio/mpeg',
+                        metadata: {
+                            type: cast.framework.messages.MetadataType.AUDIOBOOK_CHAPTER,
+                            title: book.media?.metadata?.title || 'Unknown Title',
+                            subtitle: book.media?.metadata?.subtitle || '',
+                            artist: book.media?.metadata?.authors?.join(', ') || '',
+                            albumName: book.media?.metadata?.title || '',
+                            images: [{
+                                url: `${AUDIOBOOKSHELF_CONFIG.serverUrl}/api/items/${book.id}/cover`,
+                                width: 300,
+                                height: 400
+                            }]
+                        },
+                        customData: {
+                            bookId: book.id,
+                            libraryId: book.libraryId,
+                            serverUrl: AUDIOBOOKSHELF_CONFIG.serverUrl,
+                            token: AUDIOBOOKSHELF_CONFIG.token
+                        }
+                    }));
+
+                    addLog(`Found ${items.length} books in library`, 'success');
+                    return { items };
+                })
+                .catch(error => {
+                    addLog(`Library browse error: ${error.message}`, 'error');
+                    return { items: [] };
+                });
+        }
+
+        function handleRecentBrowse(request) {
+            addLog('📖 Handling recent browse request', 'info');
+            
+            // Use existing endpoint: /api/me/items-in-progress
+            return fetchFromAPI('/api/me/items-in-progress')
+                .then(data => {
+                    const items = (data || []).map(item => {
+                        const book = item.libraryItem;
+                        const progress = item.progress || 0;
+                        const progressPercent = Math.round(progress * 100);
+
+                        return {
+                            entity: `recent_book_${book.id}`,
+                            title: book.media?.metadata?.title || 'Unknown Title',
+                            subtitle: `${book.media?.metadata?.authors?.join(', ') || ''} • ${progressPercent}% complete`,
+                            description: 'Continue where you left off',
+                            image: {
+                                url: `${AUDIOBOOKSHELF_CONFIG.serverUrl}/api/items/${book.id}/cover`,
+                                width: 300,
+                                height: 400
+                            },
+                            playable: true,
+                            contentId: `${AUDIOBOOKSHELF_CONFIG.serverUrl}/api/items/${book.id}/play`,
+                            contentType: 'audio/mpeg',
+                            customData: {
+                                bookId: book.id,
+                                libraryId: book.libraryId,
+                                startMs: Math.floor((item.currentTime || 0) * 1000),
+                                progress: progress,
+                                serverUrl: AUDIOBOOKSHELF_CONFIG.serverUrl,
+                                token: AUDIOBOOKSHELF_CONFIG.token
+                            }
+                        };
+                    });
+
+                    addLog(`Found ${items.length} items in progress`, 'success');
+                    return { items };
+                })
+                .catch(error => {
+                    addLog(`Recent browse error: ${error.message}`, 'error');
+                    return { items: [] };
+                });
+        }
+
+        function handleCollectionsBrowse(request) {
+            addLog('📚 Handling collections browse request', 'info');
+            
+            if (!AUDIOBOOKSHELF_CONFIG.libraryId) {
+                return Promise.resolve({ items: [] });
+            }
+
+            // Use existing endpoint: /api/libraries/{libraryId}/collections?minified=1&sort=name&limit=1000
+            return fetchFromAPI(`/api/libraries/${AUDIOBOOKSHELF_CONFIG.libraryId}/collections?minified=1&sort=name&limit=100`)
+                .then(data => {
+                    const items = (data.results || []).map(collection => ({
+                        entity: `collection_${collection.id}`,
+                        title: collection.name || 'Unknown Collection',
+                        subtitle: `${collection.books?.length || 0} books`,
+                        description: collection.description || '',
+                        image: {
+                            url: `${AUDIOBOOKSHELF_CONFIG.serverUrl}/api/collections/${collection.id}/cover`,
+                            width: 300,
+                            height: 300
+                        },
+                        browsable: true
+                    }));
+
+                    addLog(`Found ${items.length} collections`, 'success');
+                    return { items };
+                })
+                .catch(error => {
+                    addLog(`Collections browse error: ${error.message}`, 'error');
+                    return { items: [] };
+                });
+        }
+
+        function handleAuthorsBrowse(request) {
+            addLog('👨‍💼 Handling authors browse request', 'info');
+            
+            if (!AUDIOBOOKSHELF_CONFIG.libraryId) {
+                return Promise.resolve({ items: [] });
+            }
+
+            // Use existing endpoint: /api/libraries/{libraryId}/authors
+            return fetchFromAPI(`/api/libraries/${AUDIOBOOKSHELF_CONFIG.libraryId}/authors`)
+                .then(data => {
+                    const items = (data.authors || []).map(author => ({
+                        entity: `author_${author.id}`,
+                        title: author.name || 'Unknown Author',
+                        subtitle: `${author.numBooks || 0} books available`,
+                        description: author.description || '',
+                        image: {
+                            url: author.imagePath ? 
+                                `${AUDIOBOOKSHELF_CONFIG.serverUrl}${author.imagePath}` :
+                                `${AUDIOBOOKSHELF_CONFIG.serverUrl}/api/authors/${author.id}/image`,
+                            width: 200,
+                            height: 200
+                        },
+                        browsable: true
+                    }));
+
+                    addLog(`Found ${items.length} authors`, 'success');
+                    return { items };
+                })
+                .catch(error => {
+                    addLog(`Authors browse error: ${error.message}`, 'error');
+                    return { items: [] };
+                });
+        }
+
+        function handleSeriesBrowse(request) {
+            addLog('📚 Handling series browse request', 'info');
+            
+            if (!AUDIOBOOKSHELF_CONFIG.libraryId) {
+                return Promise.resolve({ items: [] });
+            }
+
+            // Use existing endpoint: /api/libraries/{libraryId}/series?minified=1&sort=name&limit=10000
+            return fetchFromAPI(`/api/libraries/${AUDIOBOOKSHELF_CONFIG.libraryId}/series?minified=1&sort=name&limit=100`)
+                .then(data => {
+                    const items = (data.results || []).map(series => ({
+                        entity: `series_${series.id}`,
+                        title: series.name || 'Unknown Series',
+                        subtitle: `${series.books?.length || 0} books`,
+                        description: series.description || '',
+                        image: {
+                            url: `${AUDIOBOOKSHELF_CONFIG.serverUrl}/api/series/${series.id}/cover`,
+                            width: 300,
+                            height: 400
+                        },
+                        browsable: true
+                    }));
+
+                    addLog(`Found ${items.length} series`, 'success');
+                    return { items };
+                })
+                .catch(error => {
+                    addLog(`Series browse error: ${error.message}`, 'error');
+                    return { items: [] };
+                });
+        }
+
+        function handleSpecificBrowse(request) {
+            addLog(`🔍 Handling specific browse: ${request.entity}`, 'info');
+            
+            // Handle browsing into specific collections, authors, or series
+            const entity = request.entity;
+            
+            if (entity.startsWith('author_')) {
+                return handleAuthorBooksBrowse(entity);
+            } else if (entity.startsWith('collection_')) {
+                return handleCollectionBooksBrowse(entity);
+            } else if (entity.startsWith('series_')) {
+                return handleSeriesBooksBrowse(entity);
+            }
+
+            // Default empty response
+            return Promise.resolve({ items: [] });
+        }
+
+        function handleAuthorBooksBrowse(authorEntity) {
+            const authorId = authorEntity.replace('author_', '');
+            addLog(`📖 Browsing books for author: ${authorId}`, 'info');
+            
+            if (!AUDIOBOOKSHELF_CONFIG.libraryId) {
+                return Promise.resolve({ items: [] });
+            }
+
+            // Use existing endpoint: /api/libraries/{libraryId}/items?filter=authors.{authorIdBase64}&sort=media.metadata.title&collapseseries=1
+            const authorIdBase64 = btoa(authorId);
+            const endpoint = `/api/libraries/${AUDIOBOOKSHELF_CONFIG.libraryId}/items?limit=100&minified=1&filter=authors.${authorIdBase64}&sort=media.metadata.title&collapseseries=1`;
+            
+            return fetchFromAPI(endpoint)
+                .then(data => {
+                    const items = (data.results || []).map(book => ({
+                        entity: `author_book_${book.id}`,
+                        title: book.media?.metadata?.title || 'Unknown Title',
+                        subtitle: book.media?.metadata?.subtitle || '',
+                        description: book.media?.metadata?.description || '',
+                        playable: true,
+                        contentId: `${AUDIOBOOKSHELF_CONFIG.serverUrl}/api/items/${book.id}/play`,
+                        contentType: 'audio/mpeg',
+                        image: {
+                            url: `${AUDIOBOOKSHELF_CONFIG.serverUrl}/api/items/${book.id}/cover`,
+                            width: 300,
+                            height: 400
+                        },
+                        metadata: {
+                            type: cast.framework.messages.MetadataType.AUDIOBOOK_CHAPTER,
+                            title: book.media?.metadata?.title || 'Unknown Title',
+                            subtitle: book.media?.metadata?.subtitle || '',
+                            artist: book.media?.metadata?.authors?.join(', ') || '',
+                            albumName: book.media?.metadata?.title || '',
+                            images: [{
+                                url: `${AUDIOBOOKSHELF_CONFIG.serverUrl}/api/items/${book.id}/cover`,
+                                width: 300,
+                                height: 400
+                            }]
+                        },
+                        customData: {
+                            bookId: book.id,
+                            libraryId: book.libraryId,
+                            authorId: authorId,
+                            serverUrl: AUDIOBOOKSHELF_CONFIG.serverUrl,
+                            token: AUDIOBOOKSHELF_CONFIG.token
+                        }
+                    }));
+
+                    addLog(`Found ${items.length} books for author`, 'success');
+                    return { items };
+                })
+                .catch(error => {
+                    addLog(`Author books browse error: ${error.message}`, 'error');
+                    return { items: [] };
+                });
+        }
+
+        function handleCollectionBooksBrowse(collectionEntity) {
+            const collectionId = collectionEntity.replace('collection_', '');
+            addLog(`📚 Browsing collection: ${collectionId}`, 'info');
+            
+            // Use existing endpoint: /api/collections/{collectionId}
+            return fetchFromAPI(`/api/collections/${collectionId}`)
+                .then(data => {
+                    const items = (data.books || []).map(book => ({
+                        entity: `collection_book_${book.id}`,
+                        title: book.media?.metadata?.title || 'Unknown Title',
+                        subtitle: book.media?.metadata?.authors?.join(', ') || '',
+                        description: book.media?.metadata?.description || '',
+                        playable: true,
+                        contentId: `${AUDIOBOOKSHELF_CONFIG.serverUrl}/api/items/${book.id}/play`,
+                        contentType: 'audio/mpeg',
+                        image: {
+                            url: `${AUDIOBOOKSHELF_CONFIG.serverUrl}/api/items/${book.id}/cover`,
+                            width: 300,
+                            height: 400
+                        },
+                        customData: {
+                            bookId: book.id,
+                            libraryId: book.libraryId,
+                            collectionId: collectionId,
+                            serverUrl: AUDIOBOOKSHELF_CONFIG.serverUrl,
+                            token: AUDIOBOOKSHELF_CONFIG.token
+                        }
+                    }));
+
+                    addLog(`Found ${items.length} books in collection`, 'success');
+                    return { items };
+                })
+                .catch(error => {
+                    addLog(`Collection books browse error: ${error.message}`, 'error');
+                    return { items: [] };
+                });
+        }
+
+        function handleSeriesBooksBrowse(seriesEntity) {
+            const seriesId = seriesEntity.replace('series_', '');
+            addLog(`📖 Browsing series: ${seriesId}`, 'info');
+            
+            if (!AUDIOBOOKSHELF_CONFIG.libraryId) {
+                return Promise.resolve({ items: [] });
+            }
+
+            // Use existing endpoint: /api/libraries/{libraryId}/items?filter=series.{seriesIdBase64}&sort=media.metadata.title
+            const seriesIdBase64 = btoa(seriesId);
+            const endpoint = `/api/libraries/${AUDIOBOOKSHELF_CONFIG.libraryId}/items?minified=1&sort=media.metadata.title&filter=series.${seriesIdBase64}&limit=100`;
+            
+            return fetchFromAPI(endpoint)
+                .then(data => {
+                    const items = (data.results || []).map(book => ({
+                        entity: `series_book_${book.id}`,
+                        title: book.media?.metadata?.title || 'Unknown Title',
+                        subtitle: `Book ${book.media?.metadata?.series?.[0]?.sequence || ''} of series`,
+                        description: book.media?.metadata?.description || '',
+                        playable: true,
+                        contentId: `${AUDIOBOOKSHELF_CONFIG.serverUrl}/api/items/${book.id}/play`,
+                        contentType: 'audio/mpeg',
+                        image: {
+                            url: `${AUDIOBOOKSHELF_CONFIG.serverUrl}/api/items/${book.id}/cover`,
+                            width: 300,
+                            height: 400
+                        },
+                        metadata: {
+                            type: cast.framework.messages.MetadataType.AUDIOBOOK_CHAPTER,
+                            title: book.media?.metadata?.title || 'Unknown Title',
+                            subtitle: book.media?.metadata?.subtitle || '',
+                            artist: book.media?.metadata?.authors?.join(', ') || '',
+                            albumName: book.media?.metadata?.series?.[0]?.name || book.media?.metadata?.title || '',
+                            images: [{
+                                url: `${AUDIOBOOKSHELF_CONFIG.serverUrl}/api/items/${book.id}/cover`,
+                                width: 300,
+                                height: 400
+                            }]
+                        },
+                        customData: {
+                            bookId: book.id,
+                            libraryId: book.libraryId,
+                            seriesId: seriesId,
+                            sequence: book.media?.metadata?.series?.[0]?.sequence || '',
+                            serverUrl: AUDIOBOOKSHELF_CONFIG.serverUrl,
+                            token: AUDIOBOOKSHELF_CONFIG.token
+                        }
+                    }));
+
+                    // Sort by series sequence if available
+                    items.sort((a, b) => {
+                        const seqA = parseFloat(a.customData.sequence) || 0;
+                        const seqB = parseFloat(b.customData.sequence) || 0;
+                        return seqA - seqB;
+                    });
+
+                    addLog(`Found ${items.length} books in series`, 'success');
+                    return { items };
+                })
+                .catch(error => {
+                    addLog(`Series books browse error: ${error.message}`, 'error');
+                    return { items: [] };
+                });
+        }
+
+        function setupCastReceiver() {
+            try {
+                addLog('🔧 Configuring Cast receiver...', 'info');
+
+                const context = cast.framework.CastReceiverContext.getInstance();
+                playerManager = context.getPlayerManager();
+
+                // Configure enhanced playback settings
+                const playbackConfig = new cast.framework.PlaybackConfig();
+                
+                // Enable all available modern commands
+                playbackConfig.supportedCommands = 
+                    cast.framework.messages.Command.ALL_BASIC_MEDIA |
+                    cast.framework.messages.Command.QUEUE_NEXT |
+                    cast.framework.messages.Command.QUEUE_PREV |
+                    cast.framework.messages.Command.SEEK;
+
+                // Advanced settings
+                playbackConfig.autoResumeDuration = 8; // Auto-resume within 8 seconds
+                playbackConfig.autoPauseDuration = 0; // Don't auto-pause
+                playbackConfig.segmentRequestRetryLimit = 5;
+
+                addLog('✅ Playback configuration applied', 'success');
+
+                // Enhanced LOAD message interceptor
+                playerManager.setMessageInterceptor(
+                    cast.framework.messages.MessageType.LOAD,
+                    (loadRequest) => {
+                        addLog('📥 Processing LOAD request...', 'info');
+
+                        const mediaInfo = loadRequest.media;
+                        if (!mediaInfo) {
+                            addLog('❌ No media information in LOAD request', 'error');
+                            return loadRequest;
+                        }
+
+                        addLog(`🎵 Content ID: ${mediaInfo.contentId}`, 'debug');
+                        addLog(`📄 Content Type: ${mediaInfo.contentType || 'unknown'}`, 'debug');
+
+                        // Handle custom audiobook data
+                        const customData = mediaInfo.customData;
+                        if (customData) {
+                            addLog(`📊 Custom data: ${JSON.stringify(customData)}`, 'debug');
+
+                            // Extract Audiobookshelf configuration from customData
+                            if (customData.serverUrl) {
+                                AUDIOBOOKSHELF_CONFIG.serverUrl = customData.serverUrl;
+                                addLog(`🔧 Server URL configured: ${customData.serverUrl}`, 'info');
+                            }
+                            if (customData.token) {
+                                AUDIOBOOKSHELF_CONFIG.token = customData.token;
+                                addLog(`🔑 Authentication token configured`, 'info');
+                            }
+                            if (customData.libraryId) {
+                                AUDIOBOOKSHELF_CONFIG.libraryId = customData.libraryId;
+                                addLog(`📚 Library ID configured: ${customData.libraryId}`, 'info');
+                            }
+
+                            // Handle chapter start time
+                            if (typeof customData.startMs === 'number' && customData.startMs > 0) {
+                                const startTimeSec = customData.startMs / 1000;
+                                loadRequest.currentTime = startTimeSec;
+                                addLog(`⏰ Chapter start time: ${formatDuration(startTimeSec)}`, 'info');
+                            }
+
+                            // Handle custom content URL
+                            if (customData.originalUri) {
+                                loadRequest.media.contentId = customData.originalUri;
+                                addLog(`🔗 Using custom URI: ${customData.originalUri}`, 'info');
+                            }
+
+                            // Log chapter information
+                            if (typeof customData.endMs === 'number') {
+                                const durationMs = customData.endMs - (customData.startMs || 0);
+                                addLog(`📖 Chapter duration: ${formatDuration(durationMs / 1000)}`, 'info');
+                            }
+                        }
+
+                        // Update display immediately
+                        updateMediaDisplay(mediaInfo);
+                        
+                        return loadRequest;
+                    }
+                );
+
+                // Event listeners for player state changes
+                playerManager.addEventListener(
+                    cast.framework.events.EventType.PLAYER_LOAD_COMPLETE,
+                    (event) => {
+                        addLog('✅ Media loaded successfully', 'success');
+                        setStatus('Ready', 'playing');
+                        
+                        const media = playerManager.getMediaInformation();
+                        if (media) {
+                            updateMediaDisplay(media);
+                        }
+                    }
+                );
+
+                playerManager.addEventListener(
+                    cast.framework.events.EventType.PLAYER_PLAYING,
+                    () => {
+                        addLog('▶️ Playback started', 'success');
+                        setStatus('Playing', 'playing');
+                        startProgressUpdates();
+                    }
+                );
+
+                playerManager.addEventListener(
+                    cast.framework.events.EventType.PLAYER_PAUSED,
+                    () => {
+                        addLog('⏸️ Playback paused', 'info');
+                        setStatus('Paused', 'paused');
+                        stopProgressUpdates();
+                    }
+                );
+
+                playerManager.addEventListener(
+                    cast.framework.events.EventType.PLAYER_IDLE,
+                    (event) => {
+                        const reason = event.idleReason;
+                        addLog(`⏹️ Player idle: ${reason}`, 'info');
+                        setStatus('Idle', 'loading');
+                        stopProgressUpdates();
+                    }
+                );
+
+                // Enhanced error handling
+                playerManager.addEventListener(
+                    cast.framework.events.EventType.ERROR,
+                    (errorEvent) => {
+                        const error = errorEvent.detailedErrorCode || errorEvent.error;
+                        addLog(`❌ Player error: ${JSON.stringify(error)}`, 'error');
+                        setStatus('Error', 'error');
+
+                        // Specific error handling
+                        if (error) {
+                            if (error.code) {
+                                switch (error.code) {
+                                    case 'MEDIA_UNKNOWN':
+                                        addLog('🚫 Unsupported media format', 'error');
+                                        break;
+                                    case 'MEDIA_ABORTED':
+                                        addLog('⚠️ Media loading was aborted', 'warning');
+                                        break;
+                                    case 'NETWORK_ERROR':
+                                        addLog('🌐 Network error loading media', 'error');
+                                        break;
+                                    case 'MEDIA_DECODE_ERROR':
+                                        addLog('🔧 Media decode error', 'error');
+                                        break;
+                                    default:
+                                        addLog(`❓ Unknown error code: ${error.code}`, 'error');
+                                }
+                            }
+                            
+                            if (error.reason) {
+                                addLog(`💭 Error reason: ${error.reason}`, 'error');
+                            }
+                        }
+                    }
+                );
+
+                // Start the Cast receiver with enhanced options
+                const receiverOptions = new cast.framework.CastReceiverOptions();
+                receiverOptions.playbackConfig = playbackConfig;
+                receiverOptions.statusText = "Audiobookshelf Ready 🎧";
+                receiverOptions.maxInactivity = 7200; // 2 hours
+                receiverOptions.skipPlayersLoad = false;
+
+                context.start(receiverOptions);
+                
+                // Setup Media Browse API support
+                setupMediaBrowseSupport();
+                
+                addLog('🎉 Cast receiver initialized successfully!', 'success');
+                setStatus('Ready', 'playing');
+
+            } catch (error) {
+                addLog(`💥 Critical error during setup: ${error.message}`, 'error');
+                addLog(`Stack trace: ${error.stack}`, 'error');
+                setStatus('Setup Failed', 'error');
+                
+                // Show error in UI
+                document.getElementById('title').textContent = 'Setup Error';
+                document.getElementById('subtitle').textContent = error.message;
+            }
+        }
+
+        // Wait for Cast SDK with timeout
+        function waitForCastSDK(timeout = 10000) {
+            const startTime = Date.now();
+            
+            function checkSDK() {
+                if (typeof cast !== 'undefined' && 
+                    cast.framework && 
+                    cast.framework.CastReceiverContext) {
+                    
+                    addLog('✅ Cast SDK loaded successfully', 'success');
+                    setupCastReceiver();
+                    return;
+                }
+
+                if (Date.now() - startTime > timeout) {
+                    addLog('⏰ Timeout waiting for Cast SDK', 'error');
+                    setStatus('SDK Load Failed', 'error');
+                    return;
+                }
+
+                addLog('⏳ Waiting for Cast SDK...', 'info');
+                setTimeout(checkSDK, 100);
+            }
+
+            checkSDK();
+        }
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => waitForCastSDK());
+        } else {
+            waitForCastSDK();
+        }
+
+        // Handle page lifecycle
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                addLog('👁️ Page visible', 'debug');
+            } else {
+                addLog('🙈 Page hidden', 'debug');
+            }
+        });
+
+        // Global error handlers
+        window.addEventListener('error', (event) => {
+            addLog(`🔥 JavaScript Error: ${event.message} at ${event.filename}:${event.lineno}`, 'error');
+        });
+
+        window.addEventListener('unhandledrejection', (event) => {
+            addLog(`🚨 Unhandled Promise Rejection: ${event.reason}`, 'error');
+            event.preventDefault();
+        });
+
+        // Connection quality simulation (for demo purposes)
+        setInterval(() => {
+            const bars = document.querySelectorAll('.bar');
+            const activeCount = Math.floor(Math.random() * 4) + 1;
+            
+            bars.forEach((bar, index) => {
+                if (index < activeCount) {
+                    bar.classList.add('active');
+                } else {
+                    bar.classList.remove('active');
+                }
+            });
+            
+            const qualityText = document.querySelector('.quality-text');
+            const qualities = ['EXCELLENT', 'GOOD', 'FAIR', 'POOR'];
+            qualityText.textContent = qualities[activeCount - 1];
+        }, 5000);
+
     </script>
 </body>
 </html>
