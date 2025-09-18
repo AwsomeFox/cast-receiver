@@ -886,21 +886,10 @@
                     this.log(`📊 Custom Data: ${JSON.stringify(loadRequest.media.customData, null, 2)}`, 'info');
                     this.extractChapterData(loadRequest.media);
 
-                    // Validate chapter data
-                    const customData = loadRequest.media.customData;
-                    if (customData.isChapter && customData.originalUri) {
-                        this.log(`🔧 Chapter detected - replacing contentId with originalUri`, 'info');
-                        this.log(`🔧 Original: ${loadRequest.media.contentId}`, 'info');
-                        this.log(`🔧 Replacing with: ${customData.originalUri}`, 'info');
-
-                        // Use the original URI for the actual audio file
-                        loadRequest.media.contentId = customData.originalUri;
-
-                        // Ensure proper content type
-                        if (!loadRequest.media.contentType || loadRequest.media.contentType === 'application/x-mpegURL') {
-                            loadRequest.media.contentType = 'audio/mpeg';
-                            this.log(`🔧 Set content type to audio/mpeg`, 'info');
-                        }
+                    // Ensure proper content type for audio files
+                    if (!loadRequest.media.contentType || loadRequest.media.contentType === 'application/x-mpegURL') {
+                        loadRequest.media.contentType = 'audio/mpeg';
+                        this.log(`🔧 Set content type to audio/mpeg`, 'info');
                     }
                 }
 
@@ -914,7 +903,7 @@
                 this.log('📋 QUEUE_LOAD request received', 'info');
                 this.log(`📱 Queue items: ${queueLoadRequest.items.length}`, 'info');
 
-                // Process each queue item to fix chapter data
+                // Log queue items for debugging
                 queueLoadRequest.items.forEach((queueItem, index) => {
                     const media = queueItem.media;
                     this.log(`📱 Item ${index}: ${media.contentId}`, 'info');
@@ -922,23 +911,9 @@
                     if (media.customData) {
                         this.log(`📊 Item ${index} Custom Data: ${JSON.stringify(media.customData, null, 2)}`, 'info');
 
-                        // Fix chapter content IDs
-                        const customData = media.customData;
-                        if (customData.isChapter && customData.originalUri) {
-                            this.log(`🔧 Item ${index}: Chapter detected - replacing contentId`, 'info');
-                            media.contentId = customData.originalUri;
-
-                            // Ensure proper content type
-                            if (!media.contentType || media.contentType === 'application/x-mpegURL') {
-                                media.contentType = 'audio/mpeg';
-                            }
-
-                            // Set proper stream duration based on chapter length
-                            if (customData.startMs !== undefined && customData.endMs !== undefined) {
-                                const chapterDurationMs = customData.endMs - customData.startMs;
-                                media.streamDuration = chapterDurationMs / 1000; // Convert to seconds
-                                this.log(`🔧 Item ${index}: Set stream duration to ${media.streamDuration}s`, 'info');
-                            }
+                        // Ensure proper content type for audio files
+                        if (!media.contentType || media.contentType === 'application/x-mpegURL') {
+                            media.contentType = 'audio/mpeg';
                         }
                     }
                 });
