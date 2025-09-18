@@ -117,6 +117,78 @@
             margin: 20px 0;
         }
         
+        .controls-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .control-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            user-select: none;
+        }
+        
+        .control-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: scale(1.05);
+        }
+        
+        .control-button:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .control-button.clicked {
+            animation: buttonClick 0.3s ease-out;
+        }
+        
+        @keyframes buttonClick {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.9); }
+            100% { transform: scale(1); }
+        }
+        
+        .skip-button {
+            width: 60px;
+            height: 60px;
+            font-size: 20px;
+        }
+        
+        .play-pause-button {
+            width: 80px;
+            height: 80px;
+            font-size: 32px;
+            background: rgba(0, 196, 255, 0.2);
+            border-color: #00c4ff;
+        }
+        
+        .play-pause-button:hover {
+            background: rgba(0, 196, 255, 0.3);
+            box-shadow: 0 0 20px rgba(0, 196, 255, 0.4);
+        }
+        
+        .skip-time {
+            font-size: 10px;
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ccc;
+            font-weight: 500;
+        }
+        
         .progress-section {
             margin-bottom: 20px;
         }
@@ -277,6 +349,22 @@
         </div>
         
         <div class="playback-controls" id="controls" style="display: none;">
+            <div class="controls-row">
+                <div class="control-button skip-button" id="skip-backward" title="Skip Backward 10s">
+                    ⏪
+                    <div class="skip-time">10s</div>
+                </div>
+                
+                <div class="control-button play-pause-button" id="play-pause" title="Play/Pause">
+                    ▶️
+                </div>
+                
+                <div class="control-button skip-button" id="skip-forward" title="Skip Forward 30s">
+                    ⏩
+                    <div class="skip-time">30s</div>
+                </div>
+            </div>
+            
             <div class="progress-section">
                 <div class="progress-track">
                     <div class="progress-indicator" id="progress"></div>
@@ -298,6 +386,11 @@
         let currentMedia = null;
         let progressUpdateInterval;
         let mediaManager;
+        let isPlaying = false;
+        
+        // Skip intervals (in seconds)
+        const SKIP_BACKWARD_TIME = 10;
+        const SKIP_FORWARD_TIME = 30;
         
         // Enhanced logging system
         function addLog(message, type = 'info') {
@@ -433,6 +526,93 @@
 
             // Show playback controls
             document.getElementById('controls').style.display = 'block';
+            
+            // Setup control button listeners
+            setupControlButtons();
+        }
+
+        function setupControlButtons() {
+            // Add visual feedback for button clicks
+            function addClickFeedback(button) {
+                button.classList.add('clicked');
+                setTimeout(() => button.classList.remove('clicked'), 300);
+            }
+
+            // Skip backward button
+            document.getElementById('skip-backward').addEventListener('click', (e) => {
+                addClickFeedback(e.target);
+                if (playerManager) {
+                    const currentTime = playerManager.getCurrentTimeSec();
+                    const newTime = Math.max(0, currentTime - SKIP_BACKWARD_TIME);
+                    playerManager.seek(newTime);
+                    addLog(`⏪ Skipped backward ${SKIP_BACKWARD_TIME}s to ${formatDuration(newTime)}`, 'info');
+                }
+            });
+
+            // Skip forward button
+            document.getElementById('skip-forward').addEventListener('click', (e) => {
+                addClickFeedback(e.target);
+                if (playerManager) {
+                    const currentTime = playerManager.getCurrentTimeSec();
+                    const duration = playerManager.getDurationSec();
+                    const newTime = Math.min(duration || currentTime + SKIP_FORWARD_TIME, currentTime + SKIP_FORWARD_TIME);
+                    playerManager.seek(newTime);
+                    addLog(`⏩ Skipped forward ${SKIP_FORWARD_TIME}s to ${formatDuration(newTime)}`, 'info');
+                }
+            });
+
+            // Play/Pause button
+            document.getElementById('play-pause').addEventListener('click', (e) => {
+                addClickFeedback(e.target);
+                if (playerManager) {
+                    const playerState = playerManager.getPlayerState();
+                    if (playerState === cast.framework.messages.PlayerState.PLAYING) {
+                        playerManager.pause();
+                        addLog('⏸️ Playback paused via button', 'info');
+                    } else if (playerState === cast.framework.messages.PlayerState.PAUSED) {
+                        playerManager.play();
+                        addLog('▶️ Playback resumed via button', 'info');
+                    }
+                }
+            });
+
+            addLog('🎮 Control buttons initialized', 'success');
+            
+            // Add keyboard support for smart displays
+            document.addEventListener('keydown', (event) => {
+                switch(event.key) {
+                    case ' ':
+                    case 'Enter':
+                        event.preventDefault();
+                        document.getElementById('play-pause').click();
+                        break;
+                    case 'ArrowLeft':
+                        event.preventDefault();
+                        document.getElementById('skip-backward').click();
+                        break;
+                    case 'ArrowRight':
+                        event.preventDefault();
+                        document.getElementById('skip-forward').click();
+                        break;
+                    default:
+                        break;
+                }
+            });
+        }
+
+        function updatePlayPauseButton() {
+            const button = document.getElementById('play-pause');
+            const playerState = playerManager?.getPlayerState();
+            
+            if (playerState === cast.framework.messages.PlayerState.PLAYING) {
+                button.innerHTML = '⏸️';
+                button.title = 'Pause';
+                isPlaying = true;
+            } else {
+                button.innerHTML = '▶️';
+                button.title = 'Play';
+                isPlaying = false;
+            }
         }
 
         function updateProgress() {
@@ -958,12 +1138,18 @@
                 // Configure enhanced playback settings
                 const playbackConfig = new cast.framework.PlaybackConfig();
                 
-                // Enable all available modern commands
+                // Enable all available modern commands including skip
                 playbackConfig.supportedCommands = 
                     cast.framework.messages.Command.ALL_BASIC_MEDIA |
                     cast.framework.messages.Command.QUEUE_NEXT |
                     cast.framework.messages.Command.QUEUE_PREV |
-                    cast.framework.messages.Command.SEEK;
+                    cast.framework.messages.Command.SEEK |
+                    cast.framework.messages.Command.SKIP_FORWARD |
+                    cast.framework.messages.Command.SKIP_BACKWARD;
+
+                // Configure skip intervals for audiobooks
+                playbackConfig.skipStepSec = SKIP_FORWARD_TIME; // Default skip forward
+                playbackConfig.seekStepSec = SKIP_BACKWARD_TIME; // Default skip backward
 
                 // Advanced settings
                 playbackConfig.autoResumeDuration = 8; // Auto-resume within 8 seconds
@@ -971,6 +1157,26 @@
                 playbackConfig.segmentRequestRetryLimit = 5;
 
                 addLog('✅ Playback configuration applied', 'success');
+
+                // Handle skip commands from sender apps
+                playerManager.setMessageInterceptor(
+                    cast.framework.messages.MessageType.SEEK,
+                    (seekRequest) => {
+                        const currentTime = playerManager.getCurrentTimeSec();
+                        const seekTime = seekRequest.currentTime;
+                        const seekDiff = seekTime - currentTime;
+                        
+                        if (Math.abs(seekDiff - SKIP_FORWARD_TIME) < 1) {
+                            addLog(`⏩ Skip forward command received (${SKIP_FORWARD_TIME}s)`, 'info');
+                        } else if (Math.abs(seekDiff + SKIP_BACKWARD_TIME) < 1) {
+                            addLog(`⏪ Skip backward command received (${SKIP_BACKWARD_TIME}s)`, 'info');
+                        } else {
+                            addLog(`🎯 Seek to ${formatDuration(seekTime)}`, 'info');
+                        }
+                        
+                        return seekRequest;
+                    }
+                );
 
                 // Enhanced LOAD message interceptor
                 playerManager.setMessageInterceptor(
@@ -1044,6 +1250,8 @@
                         if (media) {
                             updateMediaDisplay(media);
                         }
+                        
+                        updatePlayPauseButton();
                     }
                 );
 
@@ -1053,6 +1261,7 @@
                         addLog('▶️ Playback started', 'success');
                         setStatus('Playing', 'playing');
                         startProgressUpdates();
+                        updatePlayPauseButton();
                     }
                 );
 
@@ -1062,6 +1271,7 @@
                         addLog('⏸️ Playback paused', 'info');
                         setStatus('Paused', 'paused');
                         stopProgressUpdates();
+                        updatePlayPauseButton();
                     }
                 );
 
@@ -1072,6 +1282,7 @@
                         addLog(`⏹️ Player idle: ${reason}`, 'info');
                         setStatus('Idle', 'loading');
                         stopProgressUpdates();
+                        updatePlayPauseButton();
                     }
                 );
 
