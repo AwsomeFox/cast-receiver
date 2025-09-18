@@ -694,6 +694,14 @@
                         throw new Error('Failed to get Cast context or player manager');
                     }
 
+                    // Log available event types for debugging
+                    if (cast?.framework?.events) {
+                        this.log(`🔍 Available events object keys: ${Object.keys(cast.framework.events)}`, 'info');
+                        if (cast.framework.events.EventType) {
+                            this.log(`🔍 EventType keys: ${Object.keys(cast.framework.events.EventType)}`, 'info');
+                        }
+                    }
+
                     this.setupMessageInterceptors();
                     this.setupEventListeners();
                     this.setupPlaybackConfig();
@@ -710,19 +718,45 @@
                     this.log(`🔍 Cast object available: ${typeof cast !== 'undefined'}`, 'info');
                     this.log(`🔍 Framework available: ${typeof cast?.framework !== 'undefined'}`, 'info');
                     this.log(`🔍 Events available: ${typeof cast?.framework?.events !== 'undefined'}`, 'info');
+
+                    // Log available event types for debugging
+                    if (cast?.framework?.events) {
+                        this.log(`🔍 Available events object keys: ${Object.keys(cast.framework.events)}`, 'info');
+                        if (cast.framework.events.EventType) {
+                            this.log(`🔍 EventType keys: ${Object.keys(cast.framework.events.EventType)}`, 'info');
+                        }
+                    }
                 }
             }
 
             setupPlaybackConfig() {
-                const playbackConfig = new cast.framework.PlaybackConfig();
-                playbackConfig.supportedCommands = cast.framework.messages.Command.ALL_BASIC_MEDIA |
-                    cast.framework.messages.Command.QUEUE_NEXT |
-                    cast.framework.messages.Command.QUEUE_PREV |
-                    cast.framework.messages.Command.SEEK;
+                try {
+                    const playbackConfig = new cast.framework.PlaybackConfig();
 
-                playbackConfig.autoResumeDuration = 5;
-                this.context.setPlaybackConfig(playbackConfig);
-                this.log('⚙️ Playback configuration set', 'info');
+                    // Set supported commands safely
+                    if (cast.framework.messages && cast.framework.messages.Command) {
+                        playbackConfig.supportedCommands =
+                            cast.framework.messages.Command.ALL_BASIC_MEDIA |
+                            cast.framework.messages.Command.QUEUE_NEXT |
+                            cast.framework.messages.Command.QUEUE_PREV |
+                            cast.framework.messages.Command.SEEK;
+                    }
+
+                    playbackConfig.autoResumeDuration = 5;
+
+                    // Check if setPlaybackConfig exists on context or playerManager
+                    if (typeof this.context.setPlaybackConfig === 'function') {
+                        this.context.setPlaybackConfig(playbackConfig);
+                        this.log('⚙️ Playback configuration set on context', 'info');
+                    } else if (typeof this.playerManager.setPlaybackConfig === 'function') {
+                        this.playerManager.setPlaybackConfig(playbackConfig);
+                        this.log('⚙️ Playback configuration set on playerManager', 'info');
+                    } else {
+                        this.log('⚠️ setPlaybackConfig not available, using defaults', 'warning');
+                    }
+                } catch (error) {
+                    this.log(`⚠️ Failed to set playback config: ${error.message}`, 'warning');
+                }
             }
 
             setupMessageInterceptors() {
@@ -762,49 +796,67 @@
                     }
                 };
 
+                // Use string constants for event types (more reliable in Cast SDK v3)
+                const eventTypes = {
+                    PLAYER_LOAD_COMPLETE: 'PLAYER_LOAD_COMPLETE',
+                    PLAYING: 'PLAYING',
+                    PAUSED: 'PAUSED',
+                    IDLE: 'IDLE',
+                    TIME_UPDATE: 'TIME_UPDATE',
+                    QUEUE_CHANGE: 'QUEUE_CHANGE',
+                    ERROR: 'ERROR'
+                };
+
+                // Try to get event types from framework first, fallback to string constants
+                const getEventType = (eventName) => {
+                    return cast.framework.events?.EventType?.[eventName] ||
+                           cast.framework.events?.[eventName] ||
+                           eventTypes[eventName];
+                };
+
                 // Media Load Complete
                 safeAddEventListener(
-                    cast.framework.events?.EventType?.PLAYER_LOAD_COMPLETE,
+                    getEventType('PLAYER_LOAD_COMPLETE'),
                     () => this.handleMediaLoadComplete(),
                     'Media Load Complete'
                 );
 
                 // Playback State Changes
                 safeAddEventListener(
-                    cast.framework.events?.EventType?.PLAYER_PLAYING,
+                    getEventType('PLAYING'),
                     () => this.handlePlaybackState('playing'),
                     'Player Playing'
                 );
 
                 safeAddEventListener(
-                    cast.framework.events?.EventType?.PLAYER_PAUSED,
+                    getEventType('PAUSED'),
                     () => this.handlePlaybackState('paused'),
                     'Player Paused'
                 );
 
                 safeAddEventListener(
-                    cast.framework.events?.EventType?.PLAYER_IDLE,
+                    getEventType('IDLE'),
                     (event) => this.handlePlayerIdle(event),
                     'Player Idle'
                 );
 
                 // Time Updates
                 safeAddEventListener(
-                    cast.framework.events?.EventType?.TIME_UPDATE,
+                    getEventType('TIME_UPDATE'),
                     () => this.handleTimeUpdate(),
                     'Time Update'
                 );
 
                 // Queue Changes
                 safeAddEventListener(
-                    cast.framework.events?.EventType?.QUEUE_CHANGE,
+                    getEventType('QUEUE_CHANGE'),
                     (event) => this.handleQueueChange(event),
                     'Queue Change'
                 );
 
                 // Errors
                 safeAddEventListener(
-                    cast.framework.events?.EventType?.ERROR,
+                    getEventType('ERROR'),
                     (errorEvent) => this.handleError(errorEvent),
                     'Error'
                 );
