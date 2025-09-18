@@ -674,9 +674,25 @@
                 this.log('🎬 Initializing Material 3 Cast Receiver...', 'info');
                 this.updateStatus('Initializing...', 'loading');
 
+                // Check if Cast framework is available
+                if (typeof cast === 'undefined' || !cast.framework) {
+                    this.log('❌ Cast framework not available', 'error');
+                    this.updateStatus('Cast framework not loaded', 'error');
+                    return;
+                }
+
                 try {
+                    // Log framework version if available
+                    if (cast.framework.VERSION) {
+                        this.log(`📱 Cast framework version: ${cast.framework.VERSION}`, 'info');
+                    }
+
                     this.context = cast.framework.CastReceiverContext.getInstance();
                     this.playerManager = this.context.getPlayerManager();
+
+                    if (!this.context || !this.playerManager) {
+                        throw new Error('Failed to get Cast context or player manager');
+                    }
 
                     this.setupMessageInterceptors();
                     this.setupEventListeners();
@@ -689,6 +705,11 @@
                 } catch (error) {
                     this.log(`❌ Failed to initialize: ${error.message}`, 'error');
                     this.updateStatus('Initialization failed', 'error');
+
+                    // Log additional debug information
+                    this.log(`🔍 Cast object available: ${typeof cast !== 'undefined'}`, 'info');
+                    this.log(`🔍 Framework available: ${typeof cast?.framework !== 'undefined'}`, 'info');
+                    this.log(`🔍 Events available: ${typeof cast?.framework?.events !== 'undefined'}`, 'info');
                 }
             }
 
@@ -727,47 +748,68 @@
             }
 
             setupEventListeners() {
+                // Helper function to safely add event listeners
+                const safeAddEventListener = (eventType, handler, description) => {
+                    try {
+                        if (eventType && typeof eventType === 'string') {
+                            this.playerManager.addEventListener(eventType, handler);
+                            this.log(`✅ ${description} listener added`, 'info');
+                        } else {
+                            this.log(`⚠️ Skipping ${description} - event type undefined`, 'warning');
+                        }
+                    } catch (error) {
+                        this.log(`❌ Failed to add ${description} listener: ${error.message}`, 'error');
+                    }
+                };
+
                 // Media Load Complete
-                this.playerManager.addEventListener(
-                    cast.framework.events.EventType.PLAYER_LOAD_COMPLETE,
-                    () => this.handleMediaLoadComplete()
+                safeAddEventListener(
+                    cast.framework.events?.EventType?.PLAYER_LOAD_COMPLETE,
+                    () => this.handleMediaLoadComplete(),
+                    'Media Load Complete'
                 );
 
                 // Playback State Changes
-                this.playerManager.addEventListener(
-                    cast.framework.events.EventType.PLAYER_PLAYING,
-                    () => this.handlePlaybackState('playing')
+                safeAddEventListener(
+                    cast.framework.events?.EventType?.PLAYER_PLAYING,
+                    () => this.handlePlaybackState('playing'),
+                    'Player Playing'
                 );
 
-                this.playerManager.addEventListener(
-                    cast.framework.events.EventType.PLAYER_PAUSED,
-                    () => this.handlePlaybackState('paused')
+                safeAddEventListener(
+                    cast.framework.events?.EventType?.PLAYER_PAUSED,
+                    () => this.handlePlaybackState('paused'),
+                    'Player Paused'
                 );
 
-                this.playerManager.addEventListener(
-                    cast.framework.events.EventType.PLAYER_IDLE,
-                    (event) => this.handlePlayerIdle(event)
+                safeAddEventListener(
+                    cast.framework.events?.EventType?.PLAYER_IDLE,
+                    (event) => this.handlePlayerIdle(event),
+                    'Player Idle'
                 );
 
                 // Time Updates
-                this.playerManager.addEventListener(
-                    cast.framework.events.EventType.TIME_UPDATE,
-                    () => this.handleTimeUpdate()
+                safeAddEventListener(
+                    cast.framework.events?.EventType?.TIME_UPDATE,
+                    () => this.handleTimeUpdate(),
+                    'Time Update'
                 );
 
                 // Queue Changes
-                this.playerManager.addEventListener(
-                    cast.framework.events.EventType.QUEUE_CHANGE,
-                    (event) => this.handleQueueChange(event)
+                safeAddEventListener(
+                    cast.framework.events?.EventType?.QUEUE_CHANGE,
+                    (event) => this.handleQueueChange(event),
+                    'Queue Change'
                 );
 
                 // Errors
-                this.playerManager.addEventListener(
-                    cast.framework.events.EventType.ERROR,
-                    (errorEvent) => this.handleError(errorEvent)
+                safeAddEventListener(
+                    cast.framework.events?.EventType?.ERROR,
+                    (errorEvent) => this.handleError(errorEvent),
+                    'Error'
                 );
 
-                this.log('👂 Event listeners configured', 'info');
+                this.log('👂 Event listeners configuration completed', 'info');
             }
 
             handleLoadRequest(loadRequest) {
@@ -1123,9 +1165,36 @@
             icon.textContent = receiver.debugCollapsed ? 'expand_less' : 'expand_more';
         }
 
+        // Function to wait for Cast framework to be ready
+        function waitForCastFramework(callback, maxAttempts = 50) {
+            let attempts = 0;
+
+            function checkFramework() {
+                attempts++;
+
+                if (typeof cast !== 'undefined' &&
+                    cast.framework &&
+                    cast.framework.CastReceiverContext &&
+                    cast.framework.events &&
+                    cast.framework.events.EventType) {
+                    callback();
+                } else if (attempts < maxAttempts) {
+                    setTimeout(checkFramework, 100);
+                } else {
+                    console.error('Cast framework failed to load after', maxAttempts * 100, 'ms');
+                    // Try to initialize anyway in case some parts work
+                    callback();
+                }
+            }
+
+            checkFramework();
+        }
+
         // Initialize when page loads
         window.addEventListener('load', () => {
-            window.audiobookReceiver = new AudiobookCastReceiver();
+            waitForCastFramework(() => {
+                window.audiobookReceiver = new AudiobookCastReceiver();
+            });
         });
 
         // Handle unhandled errors
