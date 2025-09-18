@@ -57,6 +57,7 @@
     </div>
 
     <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+    <script src="//www.gstatic.com/cast/sdk/libs/devtools/cast_debug_logger.js"></script>
     <script>
         function log(message, type = 'info') {
             const debugDiv = document.getElementById('debug-info');
@@ -72,7 +73,7 @@
             statusDiv.className = `status ${type}`;
         }
 
-        // Simple test receiver - minimal setup
+        // Simple test receiver with enhanced debugging
         window.addEventListener('load', () => {
             log('📱 Test Cast Receiver loaded');
             updateStatus('Testing Cast framework...', 'loading');
@@ -84,6 +85,68 @@
                 }
 
                 log(`📱 Cast framework version: ${cast.framework.VERSION || 'unknown'}`);
+
+                // Initialize Cast Debug Logger for detailed diagnostics
+                if (typeof cast.debug !== 'undefined' && cast.debug.CastDebugLogger) {
+                    log('🔍 Initializing Cast Debug Logger for enhanced diagnostics');
+
+                    const castDebugLogger = cast.debug.CastDebugLogger.getInstance();
+
+                    // Enable verbose logging for all categories
+                    castDebugLogger.setEnabled(true);
+                    castDebugLogger.showDebugLogs(true);
+
+                    // Configure logging levels (most verbose)
+                    if (cast.debug.LoggerLevel) {
+                        castDebugLogger.loggerLevelByEvents = {
+                            'cast.framework.events.category.REQUEST': cast.debug.LoggerLevel.DEBUG,
+                            'cast.framework.events.category.MEDIA': cast.debug.LoggerLevel.DEBUG,
+                            'cast.framework.events.category.CORE': cast.debug.LoggerLevel.DEBUG,
+                            'cast.framework.events.EventType.PLAYER_LOAD_COMPLETE': cast.debug.LoggerLevel.DEBUG,
+                            'cast.framework.events.EventType.ERROR': cast.debug.LoggerLevel.DEBUG,
+                            'cast.framework.events.EventType.PLAYING': cast.debug.LoggerLevel.DEBUG,
+                            'cast.framework.events.EventType.PAUSE': cast.debug.LoggerLevel.DEBUG,
+                            'cast.framework.messages.MessageType.LOAD': cast.debug.LoggerLevel.DEBUG
+                        };
+                    }
+
+                    // Add custom log handler to display Cast logs in our UI
+                    castDebugLogger.loggerLevelByTags = {};
+
+                    // Intercept console messages to also display in our UI
+                    const originalConsoleLog = console.log;
+                    const originalConsoleError = console.error;
+                    const originalConsoleWarn = console.warn;
+
+                    console.log = function(...args) {
+                        originalConsoleLog.apply(console, args);
+                        const message = args.join(' ');
+                        if (message.includes('cast.framework') || message.includes('CastDebugLogger')) {
+                            log(`[Cast Debug] ${message}`, 'info');
+                        }
+                    };
+
+                    console.error = function(...args) {
+                        originalConsoleError.apply(console, args);
+                        const message = args.join(' ');
+                        if (message.includes('cast.framework') || message.includes('CastDebugLogger')) {
+                            log(`[Cast Error] ${message}`, 'error');
+                        }
+                    };
+
+                    console.warn = function(...args) {
+                        originalConsoleWarn.apply(console, args);
+                        const message = args.join(' ');
+                        if (message.includes('cast.framework') || message.includes('CastDebugLogger')) {
+                            log(`[Cast Warning] ${message}`, 'warning');
+                        }
+                    };
+
+                    log('✅ Cast Debug Logger initialized - detailed logs will appear both here and in browser console');
+                    log('🔍 Check browser DevTools Console for comprehensive Cast diagnostics');
+                } else {
+                    log('⚠️ Cast Debug Logger not available - limited diagnostics', 'warning');
+                }
 
                 const context = cast.framework.CastReceiverContext.getInstance();
                 const playerManager = context.getPlayerManager();
