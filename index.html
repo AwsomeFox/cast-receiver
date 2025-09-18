@@ -48,59 +48,70 @@
         <h2 id="book-title"></h2>
     </div>
 
-    <script>
-        const context = cast.framework.CastReceiverContext.getInstance();
-        const playerManager = context.getPlayerManager();
-
-        // 1. Intercept LOAD requests to handle custom clipping data
-        playerManager.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, (request) => {
-            const mediaInfo = request.media;
-            const customData = mediaInfo.customData;
-
-            // Check for our custom audiobook data
-            if (customData && customData.startMs != null && customData.endMs != null) {
-                const originalUri = customData.originalUri;
-                const startMs = customData.startMs;
-                const endMs = customData.endMs;
-
-                // Adjust the request for the Cast player
-                request.media.contentId = originalUri;
-                request.media.startTime = startMs;
-                request.media.endTime = endMs;
-
-                // Update UI elements with chapter and book titles
-                const chapterTitle = mediaInfo.metadata.title;
-                const bookTitle = mediaInfo.metadata.albumTitle;
-                document.getElementById('chapter-title').textContent = chapterTitle;
-                document.getElementById('book-title').textContent = bookTitle;
-            } else {
-                // Handle standard media items
-                document.getElementById('chapter-title').textContent = mediaInfo.metadata?.title || 'Unknown Title';
-                document.getElementById('book-title').textContent = mediaInfo.metadata?.albumTitle || '';
+    <script data-cfasync="false">
+        // Wait for Cast SDK to load
+        function initializeCast() {
+            if (typeof cast === 'undefined') {
+                setTimeout(initializeCast, 100);
+                return;
             }
 
-            // Return the modified request
-            return request;
-        });
+            const context = cast.framework.CastReceiverContext.getInstance();
+            const playerManager = context.getPlayerManager();
 
-        // 2. Add extra controls and commands
-        const playbackConfig = new cast.framework.PlaybackConfig();
+            // 1. Intercept LOAD requests to handle custom clipping data
+            playerManager.setMessageInterceptor(cast.framework.messages.MessageType.LOAD, (request) => {
+                const mediaInfo = request.media;
+                const customData = mediaInfo.customData;
 
-        // Enable custom skip commands
-        playbackConfig.supportedCommands = cast.framework.messages.Command.PAUSE |
-                                          cast.framework.messages.Command.STOP |
-                                          cast.framework.messages.Command.PLAY |
-                                          cast.framework.messages.Command.SEEK |
-                                          cast.framework.messages.Command.NEXT |
-                                          cast.framework.messages.Command.PREVIOUS |
-                                          cast.framework.messages.Command.SKIP_FORWARD |
-                                          cast.framework.messages.Command.SKIP_BACKWARD;
+                // Check for our custom audiobook data
+                if (customData && customData.startMs != null && customData.endMs != null) {
+                    const originalUri = customData.originalUri;
+                    const startMs = customData.startMs;
+                    const endMs = customData.endMs;
 
-        // Set the seek jump for skip buttons (e.g., 30 seconds)
-        playbackConfig.skipForwardDuration = 30; // in seconds
-        playbackConfig.skipBackwardDuration = 30; // in seconds
+                    // Adjust the request for the Cast player
+                    request.media.contentId = originalUri;
+                    request.media.startTime = startMs;
+                    request.media.endTime = endMs;
 
-        context.start({ playbackConfig: playbackConfig });
+                    // Update UI elements with chapter and book titles
+                    const chapterTitle = mediaInfo.metadata.title;
+                    const bookTitle = mediaInfo.metadata.albumTitle;
+                    document.getElementById('chapter-title').textContent = chapterTitle;
+                    document.getElementById('book-title').textContent = bookTitle;
+                } else {
+                    // Handle standard media items
+                    document.getElementById('chapter-title').textContent = mediaInfo.metadata?.title || 'Unknown Title';
+                    document.getElementById('book-title').textContent = mediaInfo.metadata?.albumTitle || '';
+                }
+
+                // Return the modified request
+                return request;
+            });
+
+            // 2. Add extra controls and commands
+            const playbackConfig = new cast.framework.PlaybackConfig();
+
+            // Enable custom skip commands
+            playbackConfig.supportedCommands = cast.framework.messages.Command.PAUSE |
+                                              cast.framework.messages.Command.STOP |
+                                              cast.framework.messages.Command.PLAY |
+                                              cast.framework.messages.Command.SEEK |
+                                              cast.framework.messages.Command.NEXT |
+                                              cast.framework.messages.Command.PREVIOUS |
+                                              cast.framework.messages.Command.SKIP_FORWARD |
+                                              cast.framework.messages.Command.SKIP_BACKWARD;
+
+            // Set the seek jump for skip buttons (e.g., 30 seconds)
+            playbackConfig.skipForwardDuration = 30; // in seconds
+            playbackConfig.skipBackwardDuration = 30; // in seconds
+
+            context.start({ playbackConfig: playbackConfig });
+        }
+
+        // Start initialization
+        initializeCast();
     </script>
 </body>
 </html>
