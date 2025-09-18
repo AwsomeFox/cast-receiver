@@ -626,6 +626,33 @@
                 document.getElementById('progress').style.width = `${Math.min(100, Math.max(0, progressPercent))}%`;
                 document.getElementById('current-time').textContent = formatDuration(currentTime);
                 document.getElementById('total-time').textContent = formatDuration(duration);
+                
+                // Check if we have chapter boundaries defined
+                const mediaInfo = playerManager.getMediaInformation();
+                if (mediaInfo && mediaInfo.customData) {
+                    const customData = mediaInfo.customData;
+                    
+                    // If we have chapter end time, check if we're approaching it
+                    if (typeof customData.endMs === 'number' && typeof customData.startMs === 'number') {
+                        const chapterStartSec = customData.startMs / 1000;
+                        const chapterEndSec = customData.endMs / 1000;
+                        const chapterCurrentTime = currentTime - chapterStartSec;
+                        const chapterDuration = chapterEndSec - chapterStartSec;
+                        
+                        // If we've reached or passed the chapter end, pause to prevent skipping
+                        if (currentTime >= chapterEndSec) {
+                            addLog(`📖 Chapter end reached at ${formatDuration(chapterEndSec)} - pausing to prevent auto-advance`, 'info');
+                            playerManager.pause();
+                            setStatus('Chapter Finished', 'paused');
+                            return;
+                        }
+                        
+                        // Log chapter progress occasionally
+                        if (chapterCurrentTime > 0 && Math.floor(chapterCurrentTime) % 30 === 0) {
+                            addLog(`📖 Chapter progress: ${formatDuration(chapterCurrentTime)} / ${formatDuration(chapterDuration)}`, 'debug');
+                        }
+                    }
+                }
             }
         }
 
@@ -1151,10 +1178,13 @@
                 playbackConfig.skipStepSec = SKIP_FORWARD_TIME; // Default skip forward
                 playbackConfig.seekStepSec = SKIP_BACKWARD_TIME; // Default skip backward
 
-                // Advanced settings
-                playbackConfig.autoResumeDuration = 8; // Auto-resume within 8 seconds
+                // Advanced settings - prevent automatic behaviors that could cause skipping
+                playbackConfig.autoResumeDuration = 0; // Disable auto-resume to prevent unwanted playback
                 playbackConfig.autoPauseDuration = 0; // Don't auto-pause
                 playbackConfig.segmentRequestRetryLimit = 5;
+                
+                // Disable queue auto-advance to prevent skipping through chapters
+                playbackConfig.skipPlayersLoad = false;
 
                 addLog('✅ Playback configuration applied', 'success');
 
@@ -1258,6 +1288,16 @@
                             const media = playerManager.getMediaInformation();
                             if (media) {
                                 updateMediaDisplay(media);
+                                
+                                // Log media details for debugging
+                                addLog(`🎵 Loaded: "${media.metadata?.title || 'Unknown'}"`, 'info');
+                                addLog(`📁 Content ID: ${media.contentId}`, 'debug');
+                                if (media.customData) {
+                                    if (media.customData.startMs && media.customData.endMs) {
+                                        const chapterDuration = (media.customData.endMs - media.customData.startMs) / 1000;
+                                        addLog(`📖 Chapter duration: ${formatDuration(chapterDuration)}`, 'info');
+                                    }
+                                }
                             }
                             
                             updatePlayPauseButton();
@@ -1270,6 +1310,9 @@
                         EventType.PLAYER_PLAYING,
                         () => {
                             addLog('▶️ Playback started', 'success');
+                            const currentTime = playerManager.getCurrentTimeSec();
+                            const duration = playerManager.getDurationSec();
+                            addLog(`🎵 Playing at ${formatDuration(currentTime)} / ${formatDuration(duration)}`, 'debug');
                             setStatus('Playing', 'playing');
                             startProgressUpdates();
                             updatePlayPauseButton();
@@ -1281,7 +1324,8 @@
                     playerManager.addEventListener(
                         EventType.PLAYER_PAUSED,
                         () => {
-                            addLog('⏸️ Playback paused', 'info');
+                            const currentTime = playerManager.getCurrentTimeSec();
+                            addLog(`⏸️ Playback paused at ${formatDuration(currentTime)}`, 'info');
                             setStatus('Paused', 'paused');
                             stopProgressUpdates();
                             updatePlayPauseButton();
@@ -1295,7 +1339,15 @@
                         (event) => {
                             const reason = event.idleReason;
                             addLog(`⏹️ Player idle: ${reason}`, 'info');
-                            setStatus('Idle', 'loading');
+                            
+                            // Don't automatically advance if media ended naturally
+                            if (reason === cast.framework.events.IdleReason.FINISHED) {
+                                addLog('📖 Chapter/Media finished - staying on current content', 'info');
+                                setStatus('Finished', 'paused');
+                            } else {
+                                setStatus('Idle', 'loading');
+                            }
+                            
                             stopProgressUpdates();
                             updatePlayPauseButton();
                         }
