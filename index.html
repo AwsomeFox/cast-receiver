@@ -434,6 +434,8 @@
                 }
 
                 const url = `${AUDIOBOOKSHELF_CONFIG.serverUrl}${endpoint}`;
+                addLog(`🌐 API Request: ${url}`, 'debug');
+                
                 const headers = {
                     'Content-Type': 'application/json',
                     ...options.headers
@@ -443,19 +445,53 @@
                     headers['Authorization'] = `Bearer ${AUDIOBOOKSHELF_CONFIG.token}`;
                 }
 
+                addLog(`📋 Request headers: ${JSON.stringify(headers, null, 2)}`, 'debug');
+
                 const response = await fetch(url, {
                     ...options,
                     headers
                 });
 
+                addLog(`📡 Response status: ${response.status} ${response.statusText}`, 'debug');
+
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
 
-                return await response.json();
+                const result = await response.json();
+                addLog(`✅ API response received (${JSON.stringify(result).length} chars)`, 'success');
+                return result;
             } catch (error) {
-                addLog(`API fetch error: ${error.message}`, 'error');
+                addLog(`❌ API fetch error: ${error.message}`, 'error');
                 throw error;
+            }
+        }
+
+        // Test API connectivity
+        async function testAPIConnectivity() {
+            addLog('🧪 Testing API connectivity...', 'info');
+            
+            if (!AUDIOBOOKSHELF_CONFIG.serverUrl) {
+                addLog('❌ Cannot test API - no server URL configured', 'error');
+                return;
+            }
+
+            try {
+                // Test the simplest endpoint first
+                await fetchFromAPI('/ping');
+                addLog('✅ API connectivity test passed - /ping endpoint working', 'success');
+                
+                // Test authenticated endpoint if token is available
+                if (AUDIOBOOKSHELF_CONFIG.token) {
+                    try {
+                        await fetchFromAPI('/api/me');
+                        addLog('✅ Authentication test passed - /api/me endpoint working', 'success');
+                    } catch (authError) {
+                        addLog(`⚠️ Authentication test failed: ${authError.message}`, 'warning');
+                    }
+                }
+            } catch (error) {
+                addLog(`❌ API connectivity test failed: ${error.message}`, 'error');
             }
         }
 
@@ -678,7 +714,9 @@
                 addLog('🗂️ Setting up Media Browse API support...', 'info');
 
                 const context = cast.framework.CastReceiverContext.getInstance();
-                mediaManager = new cast.framework.MediaManager(playerManager);
+                
+                // Get MediaManager from context (not a constructor in Cast Framework v3)
+                mediaManager = context.getMediaManager();
 
                 // Configure browse content
                 const browseConfig = {
@@ -1280,20 +1318,31 @@
                         // Handle custom audiobook data
                         const customData = mediaInfo.customData;
                         if (customData) {
-                            addLog(`📊 Custom data: ${JSON.stringify(customData)}`, 'debug');
+                            addLog(`📊 Custom data received: ${JSON.stringify(customData, null, 2)}`, 'debug');
 
                             // Extract Audiobookshelf configuration from customData
                             if (customData.serverUrl) {
                                 AUDIOBOOKSHELF_CONFIG.serverUrl = customData.serverUrl;
                                 addLog(`🔧 Server URL configured: ${customData.serverUrl}`, 'info');
+                            } else {
+                                addLog(`⚠️ No serverUrl in customData`, 'warning');
                             }
                             if (customData.token) {
                                 AUDIOBOOKSHELF_CONFIG.token = customData.token;
-                                addLog(`🔑 Authentication token configured`, 'info');
+                                addLog(`🔑 Authentication token configured (length: ${customData.token.length})`, 'info');
+                            } else {
+                                addLog(`⚠️ No token in customData`, 'warning');
                             }
                             if (customData.libraryId) {
                                 AUDIOBOOKSHELF_CONFIG.libraryId = customData.libraryId;
                                 addLog(`📚 Library ID configured: ${customData.libraryId}`, 'info');
+                            } else {
+                                addLog(`⚠️ No libraryId in customData`, 'warning');
+                            }
+
+                            // Test API connectivity when configuration is available
+                            if (customData.serverUrl && customData.token) {
+                                testAPIConnectivity();
                             }
 
                             // Handle chapter start time
