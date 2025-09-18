@@ -19,7 +19,7 @@
             margin: 0;
             overflow: hidden;
         }
-        
+
         .receiver-container {
             display: flex;
             flex-direction: column;
@@ -27,12 +27,12 @@
             max-width: 80%;
             animation: slideIn 0.8s ease-out;
         }
-        
+
         @keyframes slideIn {
             from { opacity: 0; transform: translateY(50px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
+
         .media-artwork {
             width: 280px;
             height: 280px;
@@ -49,7 +49,7 @@
             overflow: hidden;
             transition: all 0.5s ease;
         }
-        
+
         .media-artwork::before {
             content: '';
             position: absolute;
@@ -57,18 +57,18 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(45deg, 
-                transparent 30%, 
-                rgba(255,255,255,0.05) 50%, 
+            background: linear-gradient(45deg,
+                transparent 30%,
+                rgba(255,255,255,0.05) 50%,
                 transparent 70%);
             animation: shimmer 3s infinite;
         }
-        
+
         @keyframes shimmer {
             0% { transform: translateX(-100%); }
             100% { transform: translateX(100%); }
         }
-        
+
         .media-artwork img {
             width: 100%;
             height: 100%;
@@ -77,12 +77,12 @@
             z-index: 1;
             position: relative;
         }
-        
+
         .media-content {
             text-align: center;
             max-width: 100%;
         }
-        
+
         .media-title {
             font-size: 2.8em;
             font-weight: 600;
@@ -94,7 +94,7 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        
+
         .media-subtitle {
             font-size: 1.6em;
             color: #ddd;
@@ -102,7 +102,7 @@
             font-weight: 400;
             opacity: 0.9;
         }
-        
+
         .media-author {
             font-size: 1.2em;
             color: #bbb;
@@ -110,13 +110,13 @@
             font-style: italic;
             opacity: 0.8;
         }
-        
+
         .playback-controls {
             width: 100%;
             max-width: 500px;
             margin: 20px 0;
         }
-        
+
         .controls-row {
             display: flex;
             justify-content: center;
@@ -124,7 +124,7 @@
             gap: 30px;
             margin-bottom: 20px;
         }
-        
+
         .control-button {
             background: rgba(255, 255, 255, 0.1);
             border: 2px solid rgba(255, 255, 255, 0.2);
@@ -138,34 +138,34 @@
             font-size: 24px;
             user-select: none;
         }
-        
+
         .control-button:hover {
             background: rgba(255, 255, 255, 0.2);
             border-color: rgba(255, 255, 255, 0.4);
             transform: scale(1.05);
         }
-        
+
         .control-button:active {
             transform: scale(0.95);
             background: rgba(255, 255, 255, 0.3);
         }
-        
+
         .control-button.clicked {
             animation: buttonClick 0.3s ease-out;
         }
-        
+
         @keyframes buttonClick {
             0% { transform: scale(1); }
             50% { transform: scale(0.9); }
             100% { transform: scale(1); }
         }
-        
+
         .skip-button {
             width: 60px;
             height: 60px;
             font-size: 20px;
         }
-        
+
         .play-pause-button {
             width: 80px;
             height: 80px;
@@ -173,12 +173,12 @@
             background: rgba(0, 196, 255, 0.2);
             border-color: #00c4ff;
         }
-        
+
         .play-pause-button:hover {
             background: rgba(0, 196, 255, 0.3);
             box-shadow: 0 0 20px rgba(0, 196, 255, 0.4);
         }
-        
+
         .skip-time {
             font-size: 10px;
             position: absolute;
@@ -188,11 +188,11 @@
             color: #ccc;
             font-weight: 500;
         }
-        
+
         .progress-section {
             margin-bottom: 20px;
         }
-        
+
         .progress-track {
             width: 100%;
             height: 8px;
@@ -202,7 +202,7 @@
             margin-bottom: 12px;
             position: relative;
         }
-        
+
         .progress-indicator {
             height: 100%;
             background: linear-gradient(90deg, #00c4ff, #0099cc);
@@ -210,7 +210,7 @@
             transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 0 10px rgba(0, 196, 255, 0.3);
         }
-        
+
         .progress-indicator::after {
             content: '';
             position: absolute;
@@ -222,7 +222,7 @@
             border-radius: 50%;
             box-shadow: 0 0 8px rgba(0, 196, 255, 0.6);
         }
-        
+
         .time-display {
             display: flex;
             justify-content: space-between;
@@ -231,7 +231,7 @@
             font-variant-numeric: tabular-nums;
             font-weight: 500;
         }
-        
+
         .status-indicator {
             position: absolute;
             top: 20px;
@@ -243,12 +243,12 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255,255,255,0.1);
         }
-        
+
         .status-playing { color: #4CAF50; }
         .status-paused { color: #ff9800; }
         .status-loading { color: #2196F3; }
         .status-error { color: #f44336; }
-        
+
         .debug-panel {
             position: fixed;
             bottom: 10px;
@@ -265,19 +265,19 @@
             backdrop-filter: blur(5px);
             font-family: 'Monaco', 'Consolas', monospace;
         }
-        
+
         .log-entry {
             margin: 2px 0;
             padding: 2px 0;
             border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-        
+
         .log-entry.info { color: #e0e0e0; }
         .log-entry.success { color: #4CAF50; }
         .log-entry.warning { color: #ff9800; }
         .log-entry.error { color: #f44336; }
         .log-entry.debug { color: #2196F3; }
-        
+
         .connection-quality {
             position: absolute;
             top: 20px;
@@ -286,32 +286,32 @@
             flex-direction: column;
             align-items: flex-start;
         }
-        
+
         .connection-bars {
             display: flex;
             gap: 2px;
             margin-bottom: 5px;
         }
-        
+
         .bar {
             width: 3px;
             background: #333;
             border-radius: 1px;
         }
-        
+
         .bar:nth-child(1) { height: 6px; }
         .bar:nth-child(2) { height: 10px; }
         .bar:nth-child(3) { height: 14px; }
         .bar:nth-child(4) { height: 18px; }
-        
+
         .bar.active { background: #4CAF50; }
-        
+
         .quality-text {
             font-size: 10px;
             color: #999;
             font-weight: 500;
         }
-        
+
         @media (max-width: 768px) {
             .media-title { font-size: 2.2em; }
             .media-subtitle { font-size: 1.3em; }
@@ -332,39 +332,39 @@
         </div>
         <div class="quality-text">CAST READY</div>
     </div>
-    
+
     <div class="status-indicator">
         <span id="status-text" class="status-loading">Initializing...</span>
     </div>
-    
+
     <div class="receiver-container">
         <div class="media-artwork" id="artwork">
             📚
         </div>
-        
+
         <div class="media-content">
             <h1 class="media-title" id="title">Audiobookshelf</h1>
             <h2 class="media-subtitle" id="subtitle">Cast Receiver Ready</h2>
             <p class="media-author" id="author">Waiting for media...</p>
         </div>
-        
+
         <div class="playback-controls" id="controls" style="display: none;">
             <div class="controls-row">
                 <div class="control-button skip-button" id="skip-backward" title="Skip Backward 10s">
                     ⏪
                     <div class="skip-time">10s</div>
                 </div>
-                
+
                 <div class="control-button play-pause-button" id="play-pause" title="Play/Pause">
                     ▶️
                 </div>
-                
+
                 <div class="control-button skip-button" id="skip-forward" title="Skip Forward 30s">
                     ⏩
                     <div class="skip-time">30s</div>
                 </div>
             </div>
-            
+
             <div class="progress-section">
                 <div class="progress-track">
                     <div class="progress-indicator" id="progress"></div>
@@ -376,7 +376,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="debug-panel" id="debug-panel">
         <div class="log-entry info">🚀 Cast Receiver v2024 Starting...</div>
     </div>
@@ -387,35 +387,35 @@
         let progressUpdateInterval;
         let mediaManager;
         let isPlaying = false;
-        
+
         // Skip intervals (in seconds)
         const SKIP_BACKWARD_TIME = 10;
         const SKIP_FORWARD_TIME = 30;
-        
+
         // Enhanced logging system
         function addLog(message, type = 'info') {
-            const timestamp = new Date().toLocaleTimeString('en-US', { 
-                hour12: false, 
-                hour: '2-digit', 
-                minute: '2-digit', 
-                second: '2-digit' 
+            const timestamp = new Date().toLocaleTimeString('en-US', {
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
             });
-            
+
             const fullMessage = `${timestamp} ${message}`;
             console.log(`[${type.toUpperCase()}] ${fullMessage}`);
-            
+
             const panel = document.getElementById('debug-panel');
             const entry = document.createElement('div');
             entry.className = `log-entry ${type}`;
             entry.textContent = fullMessage;
-            
+
             panel.appendChild(entry);
-            
+
             // Keep only last 10 entries
             while (panel.children.length > 10) {
                 panel.removeChild(panel.firstChild);
             }
-            
+
             panel.scrollTop = panel.scrollHeight;
         }
 
@@ -467,11 +467,11 @@
 
         function formatDuration(seconds) {
             if (!seconds || isNaN(seconds) || seconds < 0) return '0:00:00';
-            
+
             const hours = Math.floor(seconds / 3600);
             const minutes = Math.floor((seconds % 3600) / 60);
             const secs = Math.floor(seconds % 60);
-            
+
             if (hours > 0) {
                 return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
             }
@@ -503,21 +503,21 @@
             if (metadata.images && metadata.images.length > 0) {
                 const imageUrl = metadata.images[0].url;
                 addLog(`🖼️ Loading artwork: ${imageUrl}`, 'debug');
-                
+
                 const img = new Image();
                 img.crossOrigin = 'anonymous';
-                
+
                 img.onload = function() {
                     artworkElement.innerHTML = '';
                     artworkElement.appendChild(img);
                     addLog('✅ Artwork loaded successfully', 'success');
                 };
-                
+
                 img.onerror = function() {
                     addLog('❌ Failed to load artwork, using fallback', 'warning');
                     artworkElement.innerHTML = '📚';
                 };
-                
+
                 img.src = imageUrl;
             } else {
                 addLog('ℹ️ No artwork provided, using default', 'info');
@@ -526,7 +526,7 @@
 
             // Show playback controls
             document.getElementById('controls').style.display = 'block';
-            
+
             // Setup control button listeners
             setupControlButtons();
         }
@@ -577,7 +577,7 @@
             });
 
             addLog('🎮 Control buttons initialized', 'success');
-            
+
             // Add keyboard support for smart displays
             document.addEventListener('keydown', (event) => {
                 switch(event.key) {
@@ -603,7 +603,7 @@
         function updatePlayPauseButton() {
             const button = document.getElementById('play-pause');
             const playerState = playerManager?.getPlayerState();
-            
+
             if (playerState === cast.framework.messages.PlayerState.PLAYING) {
                 button.innerHTML = '⏸️';
                 button.title = 'Pause';
@@ -626,19 +626,19 @@
                 document.getElementById('progress').style.width = `${Math.min(100, Math.max(0, progressPercent))}%`;
                 document.getElementById('current-time').textContent = formatDuration(currentTime);
                 document.getElementById('total-time').textContent = formatDuration(duration);
-                
+
                 // Check if we have chapter boundaries defined
                 const mediaInfo = playerManager.getMediaInformation();
                 if (mediaInfo && mediaInfo.customData) {
                     const customData = mediaInfo.customData;
-                    
+
                     // If we have chapter end time, check if we're approaching it
                     if (typeof customData.endMs === 'number' && typeof customData.startMs === 'number') {
                         const chapterStartSec = customData.startMs / 1000;
                         const chapterEndSec = customData.endMs / 1000;
                         const chapterCurrentTime = currentTime - chapterStartSec;
                         const chapterDuration = chapterEndSec - chapterStartSec;
-                        
+
                         // If we've reached or passed the chapter end, pause to prevent skipping
                         if (currentTime >= chapterEndSec) {
                             addLog(`📖 Chapter end reached at ${formatDuration(chapterEndSec)} - pausing to prevent auto-advance`, 'info');
@@ -646,7 +646,7 @@
                             setStatus('Chapter Finished', 'paused');
                             return;
                         }
-                        
+
                         // Log chapter progress occasionally
                         if (chapterCurrentTime > 0 && Math.floor(chapterCurrentTime) % 30 === 0) {
                             addLog(`📖 Chapter progress: ${formatDuration(chapterCurrentTime)} / ${formatDuration(chapterDuration)}`, 'debug');
@@ -660,7 +660,7 @@
             if (progressUpdateInterval) {
                 clearInterval(progressUpdateInterval);
             }
-            
+
             progressUpdateInterval = setInterval(updateProgress, 500);
             addLog('⏱️ Progress tracking started', 'debug');
         }
@@ -753,19 +753,19 @@
                     switch (entity) {
                         case 'library':
                             return handleLibraryBrowse(browseRequest);
-                        
+
                         case 'recent':
                             return handleRecentBrowse(browseRequest);
-                        
+
                         case 'collections':
                             return handleCollectionsBrowse(browseRequest);
-                        
+
                         case 'authors':
                             return handleAuthorsBrowse(browseRequest);
-                        
+
                         case 'series':
                             return handleSeriesBrowse(browseRequest);
-                        
+
                         default:
                             // Handle specific item browsing (e.g., books by author)
                             return handleSpecificBrowse(browseRequest);
@@ -774,7 +774,7 @@
 
                 // Set the browse content
                 mediaManager.setBrowseContent(browseConfig);
-                
+
                 addLog('✅ Media Browse API configured successfully', 'success');
 
             } catch (error) {
@@ -784,7 +784,7 @@
 
         function handleLibraryBrowse(request) {
             addLog('📚 Handling library browse request', 'info');
-            
+
             if (!AUDIOBOOKSHELF_CONFIG.libraryId) {
                 addLog('No library ID configured', 'warning');
                 return Promise.resolve({ items: [] });
@@ -837,7 +837,7 @@
 
         function handleRecentBrowse(request) {
             addLog('📖 Handling recent browse request', 'info');
-            
+
             // Use existing endpoint: /api/me/items-in-progress
             return fetchFromAPI('/api/me/items-in-progress')
                 .then(data => {
@@ -881,7 +881,7 @@
 
         function handleCollectionsBrowse(request) {
             addLog('📚 Handling collections browse request', 'info');
-            
+
             if (!AUDIOBOOKSHELF_CONFIG.libraryId) {
                 return Promise.resolve({ items: [] });
             }
@@ -913,7 +913,7 @@
 
         function handleAuthorsBrowse(request) {
             addLog('👨‍💼 Handling authors browse request', 'info');
-            
+
             if (!AUDIOBOOKSHELF_CONFIG.libraryId) {
                 return Promise.resolve({ items: [] });
             }
@@ -927,7 +927,7 @@
                         subtitle: `${author.numBooks || 0} books available`,
                         description: author.description || '',
                         image: {
-                            url: author.imagePath ? 
+                            url: author.imagePath ?
                                 `${AUDIOBOOKSHELF_CONFIG.serverUrl}${author.imagePath}` :
                                 `${AUDIOBOOKSHELF_CONFIG.serverUrl}/api/authors/${author.id}/image`,
                             width: 200,
@@ -947,7 +947,7 @@
 
         function handleSeriesBrowse(request) {
             addLog('📚 Handling series browse request', 'info');
-            
+
             if (!AUDIOBOOKSHELF_CONFIG.libraryId) {
                 return Promise.resolve({ items: [] });
             }
@@ -979,10 +979,10 @@
 
         function handleSpecificBrowse(request) {
             addLog(`🔍 Handling specific browse: ${request.entity}`, 'info');
-            
+
             // Handle browsing into specific collections, authors, or series
             const entity = request.entity;
-            
+
             if (entity.startsWith('author_')) {
                 return handleAuthorBooksBrowse(entity);
             } else if (entity.startsWith('collection_')) {
@@ -998,7 +998,7 @@
         function handleAuthorBooksBrowse(authorEntity) {
             const authorId = authorEntity.replace('author_', '');
             addLog(`📖 Browsing books for author: ${authorId}`, 'info');
-            
+
             if (!AUDIOBOOKSHELF_CONFIG.libraryId) {
                 return Promise.resolve({ items: [] });
             }
@@ -1006,7 +1006,7 @@
             // Use existing endpoint: /api/libraries/{libraryId}/items?filter=authors.{authorIdBase64}&sort=media.metadata.title&collapseseries=1
             const authorIdBase64 = btoa(authorId);
             const endpoint = `/api/libraries/${AUDIOBOOKSHELF_CONFIG.libraryId}/items?limit=100&minified=1&filter=authors.${authorIdBase64}&sort=media.metadata.title&collapseseries=1`;
-            
+
             return fetchFromAPI(endpoint)
                 .then(data => {
                     const items = (data.results || []).map(book => ({
@@ -1055,7 +1055,7 @@
         function handleCollectionBooksBrowse(collectionEntity) {
             const collectionId = collectionEntity.replace('collection_', '');
             addLog(`📚 Browsing collection: ${collectionId}`, 'info');
-            
+
             // Use existing endpoint: /api/collections/{collectionId}
             return fetchFromAPI(`/api/collections/${collectionId}`)
                 .then(data => {
@@ -1093,7 +1093,7 @@
         function handleSeriesBooksBrowse(seriesEntity) {
             const seriesId = seriesEntity.replace('series_', '');
             addLog(`📖 Browsing series: ${seriesId}`, 'info');
-            
+
             if (!AUDIOBOOKSHELF_CONFIG.libraryId) {
                 return Promise.resolve({ items: [] });
             }
@@ -1101,7 +1101,7 @@
             // Use existing endpoint: /api/libraries/{libraryId}/items?filter=series.{seriesIdBase64}&sort=media.metadata.title
             const seriesIdBase64 = btoa(seriesId);
             const endpoint = `/api/libraries/${AUDIOBOOKSHELF_CONFIG.libraryId}/items?minified=1&sort=media.metadata.title&filter=series.${seriesIdBase64}&limit=100`;
-            
+
             return fetchFromAPI(endpoint)
                 .then(data => {
                     const items = (data.results || []).map(book => ({
@@ -1164,9 +1164,9 @@
 
                 // Configure enhanced playback settings
                 const playbackConfig = new cast.framework.PlaybackConfig();
-                
+
                 // Enable all available modern commands including skip
-                playbackConfig.supportedCommands = 
+                playbackConfig.supportedCommands =
                     cast.framework.messages.Command.ALL_BASIC_MEDIA |
                     cast.framework.messages.Command.QUEUE_NEXT |
                     cast.framework.messages.Command.QUEUE_PREV |
@@ -1182,7 +1182,7 @@
                 playbackConfig.autoResumeDuration = 0; // Disable auto-resume to prevent unwanted playback
                 playbackConfig.autoPauseDuration = 0; // Don't auto-pause
                 playbackConfig.segmentRequestRetryLimit = 5;
-                
+
                 // Disable queue auto-advance to prevent skipping through chapters
                 playbackConfig.skipPlayersLoad = false;
 
@@ -1203,7 +1203,7 @@
                         const currentTime = playerManager.getCurrentTimeSec();
                         const seekTime = seekRequest.currentTime;
                         const seekDiff = seekTime - currentTime;
-                        
+
                         if (Math.abs(seekDiff - SKIP_FORWARD_TIME) < 1) {
                             addLog(`⏩ Skip forward command received (${SKIP_FORWARD_TIME}s)`, 'info');
                         } else if (Math.abs(seekDiff + SKIP_BACKWARD_TIME) < 1) {
@@ -1211,7 +1211,7 @@
                         } else {
                             addLog(`🎯 Seek to ${formatDuration(seekTime)}`, 'info');
                         }
-                        
+
                         return seekRequest;
                     }
                 );
@@ -1230,23 +1230,50 @@
 
                         addLog(`🎵 Content ID: ${mediaInfo.contentId}`, 'debug');
                         addLog(`📄 Content Type: ${mediaInfo.contentType || 'unknown'}`, 'debug');
-                        
+
                         // Test content URL accessibility for 905 error prevention
                         if (mediaInfo.contentId) {
                             addLog(`🔍 Testing content URL accessibility: ${mediaInfo.contentId}`, 'debug');
-                            // Check if URL is reachable
-                            fetch(mediaInfo.contentId, { method: 'HEAD' })
+                            
+                            // Extract the actual URL to test (before any # fragments)
+                            const urlToTest = mediaInfo.contentId.split('#')[0];
+                            addLog(`🔗 Base URL to test: ${urlToTest}`, 'debug');
+                            
+                            // Enhanced accessibility check with detailed logging
+                            fetch(urlToTest, { 
+                                method: 'HEAD',
+                                mode: 'cors'  // Test CORS explicitly
+                            })
                                 .then(response => {
                                     if (response.ok) {
-                                        addLog(`✅ Content URL is accessible (${response.status})`, 'success');
-                                        addLog(`📋 Response headers: ${JSON.stringify([...response.headers.entries()])}`, 'debug');
+                                        addLog(`✅ Content URL is accessible (${response.status} ${response.statusText})`, 'success');
+                                        addLog(`📋 Response headers:`, 'debug');
+                                        
+                                        // Log important headers for debugging
+                                        const importantHeaders = ['content-type', 'content-length', 'access-control-allow-origin', 'accept-ranges'];
+                                        importantHeaders.forEach(header => {
+                                            const value = response.headers.get(header);
+                                            if (value) {
+                                                addLog(`   ${header}: ${value}`, 'debug');
+                                            }
+                                        });
                                     } else {
-                                        addLog(`⚠️ Content URL returned status ${response.status}`, 'warning');
+                                        addLog(`⚠️ Content URL returned status ${response.status} ${response.statusText}`, 'warning');
+                                        addLog(`💡 This may cause Error 905 (LOAD_FAILED)`, 'warning');
                                     }
                                 })
                                 .catch(error => {
                                     addLog(`❌ Content URL test failed: ${error.message}`, 'error');
-                                    addLog(`💡 This may cause Error 905 - check CORS and URL accessibility`, 'warning');
+                                    addLog(`💡 Error details: ${error.name} - ${error.stack}`, 'error');
+                                    
+                                    // Provide specific guidance based on error type
+                                    if (error.name === 'TypeError' && error.message.includes('CORS')) {
+                                        addLog(`🚫 CORS Error: Server must include 'Access-Control-Allow-Origin: *' header`, 'error');
+                                    } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                                        addLog(`🌐 Network Error: URL may be unreachable or blocked`, 'error');
+                                    }
+                                    
+                                    addLog(`🔧 This WILL cause Error 905 - check server configuration and URL accessibility`, 'error');
                                 });
                         }
 
@@ -1278,8 +1305,18 @@
 
                             // Handle custom content URL
                             if (customData.originalUri) {
-                                loadRequest.media.contentId = customData.originalUri;
-                                addLog(`🔗 Using custom URI: ${customData.originalUri}`, 'info');
+                                addLog(`🔗 Original content ID: ${mediaInfo.contentId}`, 'debug');
+                                addLog(`🔗 Replacing with custom URI: ${customData.originalUri}`, 'info');
+                                
+                                // Validate the original URI before using it
+                                try {
+                                    new URL(customData.originalUri);
+                                    loadRequest.media.contentId = customData.originalUri;
+                                    addLog(`✅ Custom URI is valid and applied`, 'success');
+                                } catch (urlError) {
+                                    addLog(`❌ Invalid original URI: ${urlError.message}`, 'error');
+                                    addLog(`🔧 Keeping original content ID: ${mediaInfo.contentId}`, 'warning');
+                                }
                             }
 
                             // Log chapter information
@@ -1291,7 +1328,7 @@
 
                         // Update display immediately
                         updateMediaDisplay(mediaInfo);
-                        
+
                         // Validate and fix content type if needed (helps prevent 905 errors)
                         if (!mediaInfo.contentType || mediaInfo.contentType === 'unknown') {
                             // Try to determine content type from URL extension
@@ -1299,7 +1336,7 @@
                             if (url) {
                                 const extension = url.split('.').pop()?.toLowerCase();
                                 let detectedType = 'audio/mpeg'; // Default fallback
-                                
+
                                 switch (extension) {
                                     case 'mp3':
                                         detectedType = 'audio/mpeg';
@@ -1318,12 +1355,12 @@
                                         detectedType = 'audio/flac';
                                         break;
                                 }
-                                
+
                                 loadRequest.media.contentType = detectedType;
                                 addLog(`🔧 Auto-detected content type: ${detectedType}`, 'info');
                             }
                         }
-                        
+
                         return loadRequest;
                     }
                 );
@@ -1335,11 +1372,11 @@
                         (event) => {
                             addLog('✅ Media loaded successfully', 'success');
                             setStatus('Ready', 'playing');
-                            
+
                             const media = playerManager.getMediaInformation();
                             if (media) {
                                 updateMediaDisplay(media);
-                                
+
                                 // Log media details for debugging
                                 addLog(`🎵 Loaded: "${media.metadata?.title || 'Unknown'}"`, 'info');
                                 addLog(`📁 Content ID: ${media.contentId}`, 'debug');
@@ -1350,7 +1387,7 @@
                                     }
                                 }
                             }
-                            
+
                             updatePlayPauseButton();
                         }
                     );
@@ -1390,7 +1427,7 @@
                         (event) => {
                             const reason = event.idleReason;
                             addLog(`⏹️ Player idle: ${reason}`, 'info');
-                            
+
                             // Don't automatically advance if media ended naturally
                             if (reason === cast.framework.events.IdleReason.FINISHED) {
                                 addLog('📖 Chapter/Media finished - staying on current content', 'info');
@@ -1398,7 +1435,7 @@
                             } else {
                                 setStatus('Idle', 'loading');
                             }
-                            
+
                             stopProgressUpdates();
                             updatePlayPauseButton();
                         }
@@ -1422,8 +1459,25 @@
                                     const errorCode = typeof error === 'number' ? error : parseInt(error.code);
                                     switch (errorCode) {
                                         case 905:
-                                            addLog('🚫 Error 905: Media load failed - likely invalid content URL or unsupported format', 'error');
-                                            addLog('💡 Check: 1) Content URL is accessible, 2) CORS headers are set, 3) Media format is supported', 'error');
+                                            addLog('🚫 Error 905: Media load failed - LOAD_FAILED', 'error');
+                                            addLog('💡 Common causes:', 'error');
+                                            addLog('   1. Content URL is not accessible to Cast receiver', 'error');
+                                            addLog('   2. Server missing CORS headers (Access-Control-Allow-Origin)', 'error');
+                                            addLog('   3. Authentication required but not provided in URL', 'error');
+                                            addLog('   4. Unsupported media format or codec', 'error');
+                                            addLog('   5. Network connectivity issues', 'error');
+                                            
+                                            // Log current media details for debugging
+                                            const failedMedia = playerManager.getMediaInformation();
+                                            if (failedMedia) {
+                                                addLog(`❌ Failed content ID: ${failedMedia.contentId}`, 'error');
+                                                addLog(`❌ Content type: ${failedMedia.contentType || 'unknown'}`, 'error');
+                                                if (failedMedia.customData) {
+                                                    addLog(`❌ Original URI: ${failedMedia.customData.originalUri || 'not set'}`, 'error');
+                                                    addLog(`❌ Server URL: ${failedMedia.customData.serverUrl || 'not set'}`, 'error');
+                                                    addLog(`❌ Has token: ${failedMedia.customData.token ? 'yes' : 'no'}`, 'error');
+                                                }
+                                            }
                                             break;
                                         case 900:
                                             addLog('🚫 Error 900: Invalid player state', 'error');
@@ -1462,11 +1516,11 @@
                                     }
                                 }
                             }
-                            
+
                             if (error && error.reason) {
                                 addLog(`💭 Error reason: ${error.reason}`, 'error');
                             }
-                            
+
                             // Log current media info for debugging
                             const mediaInfo = playerManager.getMediaInformation();
                             if (mediaInfo) {
@@ -1487,10 +1541,10 @@
                 receiverOptions.skipPlayersLoad = false;
 
                 context.start(receiverOptions);
-                
+
                 // Setup Media Browse API support
                 setupMediaBrowseSupport();
-                
+
                 addLog('🎉 Cast receiver initialized successfully!', 'success');
                 setStatus('Ready', 'playing');
 
@@ -1498,7 +1552,7 @@
                 addLog(`💥 Critical error during setup: ${error.message}`, 'error');
                 addLog(`Stack trace: ${error.stack}`, 'error');
                 setStatus('Setup Failed', 'error');
-                
+
                 // Show error in UI
                 document.getElementById('title').textContent = 'Setup Error';
                 document.getElementById('subtitle').textContent = error.message;
@@ -1508,12 +1562,12 @@
         // Wait for Cast SDK with timeout
         function waitForCastSDK(timeout = 10000) {
             const startTime = Date.now();
-            
+
             function checkSDK() {
-                if (typeof cast !== 'undefined' && 
-                    cast.framework && 
+                if (typeof cast !== 'undefined' &&
+                    cast.framework &&
                     cast.framework.CastReceiverContext) {
-                    
+
                     addLog('✅ Cast SDK loaded successfully', 'success');
                     setupCastReceiver();
                     return;
@@ -1562,7 +1616,7 @@
         setInterval(() => {
             const bars = document.querySelectorAll('.bar');
             const activeCount = Math.floor(Math.random() * 4) + 1;
-            
+
             bars.forEach((bar, index) => {
                 if (index < activeCount) {
                     bar.classList.add('active');
@@ -1570,7 +1624,7 @@
                     bar.classList.remove('active');
                 }
             });
-            
+
             const qualityText = document.querySelector('.quality-text');
             const qualities = ['EXCELLENT', 'GOOD', 'FAIR', 'POOR'];
             qualityText.textContent = qualities[activeCount - 1];
