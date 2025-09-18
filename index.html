@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Cast Receiver</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <div id="player-container">
+        <div id="media-info">
+            <div id="title">Cast Receiver Ready</div>
+            <div id="subtitle">Waiting for content...</div>
+        </div>
+        <div id="media-element-container">
+            <video id="media-element" autoplay playsinline></video>
+        </div>
+        <div id="progress-bar">
+            <div id="progress-fill"></div>
+        </div>
+        <div id="controls">
+            <div id="play-pause-button">⏸️</div>
+            <div id="current-time">00:00</div>
+            <div id="total-time">00:00</div>
+        </div>
+    </div>
+
+    <!-- Google Cast SDK -->
+    <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+    <script src="receiver.js"></script>
+</body>
+</html>

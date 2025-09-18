@@ -1,0 +1,23 @@
+# GitHub Pages configuration for Cast Receiver
+title: Custom Cast Receiver
+description: A custom Google Cast receiver application hosted on GitHub Pages
+url: "https://awsomefox.github.io"
+baseurl: "/cast-receiver"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+
+# Exclude files from processing
+exclude:
+  - README.md
+  - .gitignore
+  - .git/
+
+# Include files that would normally be excluded
+include:
+  - .nojekyll
+
+# Plugins
+plugins:
+  - jekyll-sitemap
