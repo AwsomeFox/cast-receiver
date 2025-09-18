@@ -1230,6 +1230,25 @@
 
                         addLog(`🎵 Content ID: ${mediaInfo.contentId}`, 'debug');
                         addLog(`📄 Content Type: ${mediaInfo.contentType || 'unknown'}`, 'debug');
+                        
+                        // Test content URL accessibility for 905 error prevention
+                        if (mediaInfo.contentId) {
+                            addLog(`🔍 Testing content URL accessibility: ${mediaInfo.contentId}`, 'debug');
+                            // Check if URL is reachable
+                            fetch(mediaInfo.contentId, { method: 'HEAD' })
+                                .then(response => {
+                                    if (response.ok) {
+                                        addLog(`✅ Content URL is accessible (${response.status})`, 'success');
+                                        addLog(`📋 Response headers: ${JSON.stringify([...response.headers.entries()])}`, 'debug');
+                                    } else {
+                                        addLog(`⚠️ Content URL returned status ${response.status}`, 'warning');
+                                    }
+                                })
+                                .catch(error => {
+                                    addLog(`❌ Content URL test failed: ${error.message}`, 'error');
+                                    addLog(`💡 This may cause Error 905 - check CORS and URL accessibility`, 'warning');
+                                });
+                        }
 
                         // Handle custom audiobook data
                         const customData = mediaInfo.customData;
@@ -1272,6 +1291,38 @@
 
                         // Update display immediately
                         updateMediaDisplay(mediaInfo);
+                        
+                        // Validate and fix content type if needed (helps prevent 905 errors)
+                        if (!mediaInfo.contentType || mediaInfo.contentType === 'unknown') {
+                            // Try to determine content type from URL extension
+                            const url = mediaInfo.contentId;
+                            if (url) {
+                                const extension = url.split('.').pop()?.toLowerCase();
+                                let detectedType = 'audio/mpeg'; // Default fallback
+                                
+                                switch (extension) {
+                                    case 'mp3':
+                                        detectedType = 'audio/mpeg';
+                                        break;
+                                    case 'm4a':
+                                    case 'aac':
+                                        detectedType = 'audio/mp4';
+                                        break;
+                                    case 'ogg':
+                                        detectedType = 'audio/ogg';
+                                        break;
+                                    case 'wav':
+                                        detectedType = 'audio/wav';
+                                        break;
+                                    case 'flac':
+                                        detectedType = 'audio/flac';
+                                        break;
+                                }
+                                
+                                loadRequest.media.contentType = detectedType;
+                                addLog(`🔧 Auto-detected content type: ${detectedType}`, 'info');
+                            }
+                        }
                         
                         return loadRequest;
                     }
@@ -1361,34 +1412,69 @@
                         (errorEvent) => {
                             const error = errorEvent.detailedErrorCode || errorEvent.error;
                             addLog(`❌ Player error: ${JSON.stringify(error)}`, 'error');
+                            addLog(`🔍 Full error event: ${JSON.stringify(errorEvent)}`, 'error');
                             setStatus('Error', 'error');
 
                             // Specific error handling
                             if (error) {
-                                if (error.code) {
+                                // Handle numeric error codes (like 905)
+                                if (typeof error === 'number' || (error.code && !isNaN(error.code))) {
+                                    const errorCode = typeof error === 'number' ? error : parseInt(error.code);
+                                    switch (errorCode) {
+                                        case 905:
+                                            addLog('🚫 Error 905: Media load failed - likely invalid content URL or unsupported format', 'error');
+                                            addLog('💡 Check: 1) Content URL is accessible, 2) CORS headers are set, 3) Media format is supported', 'error');
+                                            break;
+                                        case 900:
+                                            addLog('🚫 Error 900: Invalid player state', 'error');
+                                            break;
+                                        case 901:
+                                            addLog('🚫 Error 901: Load failed', 'error');
+                                            break;
+                                        case 902:
+                                            addLog('🚫 Error 902: Load cancelled', 'error');
+                                            break;
+                                        case 903:
+                                            addLog('🚫 Error 903: Load interrupted', 'error');
+                                            break;
+                                        case 904:
+                                            addLog('🚫 Error 904: Invalid request', 'error');
+                                            break;
+                                        default:
+                                            addLog(`❓ Unknown numeric error code: ${errorCode}`, 'error');
+                                    }
+                                } else if (error.code) {
                                     switch (error.code) {
-                                    case 'MEDIA_UNKNOWN':
-                                        addLog('🚫 Unsupported media format', 'error');
-                                        break;
-                                    case 'MEDIA_ABORTED':
-                                        addLog('⚠️ Media loading was aborted', 'warning');
-                                        break;
-                                    case 'NETWORK_ERROR':
-                                        addLog('🌐 Network error loading media', 'error');
-                                        break;
-                                    case 'MEDIA_DECODE_ERROR':
-                                        addLog('🔧 Media decode error', 'error');
-                                        break;
-                                    default:
-                                        addLog(`❓ Unknown error code: ${error.code}`, 'error');
+                                        case 'MEDIA_UNKNOWN':
+                                            addLog('🚫 Unsupported media format', 'error');
+                                            break;
+                                        case 'MEDIA_ABORTED':
+                                            addLog('⚠️ Media loading was aborted', 'warning');
+                                            break;
+                                        case 'NETWORK_ERROR':
+                                            addLog('🌐 Network error loading media', 'error');
+                                            break;
+                                        case 'MEDIA_DECODE_ERROR':
+                                            addLog('🔧 Media decode error', 'error');
+                                            break;
+                                        default:
+                                            addLog(`❓ Unknown error code: ${error.code}`, 'error');
+                                    }
                                 }
                             }
                             
-                            if (error.reason) {
+                            if (error && error.reason) {
                                 addLog(`💭 Error reason: ${error.reason}`, 'error');
                             }
+                            
+                            // Log current media info for debugging
+                            const mediaInfo = playerManager.getMediaInformation();
+                            if (mediaInfo) {
+                                addLog(`🎵 Failed media: ${mediaInfo.contentId}`, 'error');
+                                addLog(`📄 Content type: ${mediaInfo.contentType || 'unknown'}`, 'error');
+                            }
                         }
-                    });
+                    );
                 } else {
                     addLog('⚠️ ERROR event type not available', 'warning');
                 }
