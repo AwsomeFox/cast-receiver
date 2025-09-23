@@ -18,7 +18,7 @@
 
 /* Logo area - replace with Audiobookshelf branding */
 .logo {
-    background-image: url('https://cdn.jsdelivr.net/gh/advplyr/audiobookshelf@master/client/static/Logo.png');
+    background-image: url('icon-512.png');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
