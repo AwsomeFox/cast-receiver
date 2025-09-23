@@ -895,12 +895,23 @@
               this.log(`📱 Content ID: ${loadRequest.media.contentId}`, 'info');
               this.log(`📱 Content Type: ${loadRequest.media.contentType}`, 'info');
               this.log(`📱 Stream Type: ${loadRequest.media.streamType}`, 'info');
+              this.log(`📱 Stream Duration: ${loadRequest.media.streamDuration}ms`, 'info');
 
               // Basic validation - ensure we have a valid URL
               if (!loadRequest.media.contentId) {
                   this.log(`❌ No content ID provided`, 'error');
                   this.updateStatus('Invalid media', 'error');
-                  return loadRequest;
+                  // Return error instead of continuing
+                  throw new cast.framework.messages.InvalidRequestReason.INVALID_MEDIA_INFO;
+              }
+
+              // Validate URL format
+              try {
+                  new URL(loadRequest.media.contentId);
+              } catch (error) {
+                  this.log(`❌ Invalid URL format: ${loadRequest.media.contentId}`, 'error');
+                  this.updateStatus('Invalid URL', 'error');
+                  throw new cast.framework.messages.InvalidRequestReason.INVALID_MEDIA_INFO;
               }
 
               // Test URL accessibility
@@ -909,6 +920,12 @@
               if (loadRequest.media.customData) {
                   this.log(`📊 Custom Data: ${JSON.stringify(loadRequest.media.customData, null, 2)}`, 'info');
                   this.extractChapterData(loadRequest.media);
+
+                  // Use chapter duration from custom data if available
+                  if (loadRequest.media.customData.chapterDurationMs && loadRequest.media.customData.chapterDurationMs > 0) {
+                      loadRequest.media.streamDuration = loadRequest.media.customData.chapterDurationMs;
+                      this.log(`🕐 Set stream duration from chapter data: ${loadRequest.media.streamDuration}ms`, 'info');
+                  }
 
                   // Ensure proper content type for audio files
                   if (!loadRequest.media.contentType || loadRequest.media.contentType === 'application/x-mpegURL') {
@@ -1203,6 +1220,26 @@
               if (mediaInfo) {
                   this.updateMediaDisplay(mediaInfo);
                   this.extractChapterData(mediaInfo);
+
+                  // Check if player is ready and start playback
+                  const playerState = this.playerManager.getPlayerState();
+                  this.log(`📊 Player state after load: ${playerState}`, 'info');
+
+                  // If player is idle after load, try to start playback
+                  if (playerState === cast.framework.messages.PlayerState.IDLE) {
+                      this.log(`▶️ Player idle after load - attempting to start playback`, 'info');
+                      try {
+                          // Give a short delay then start playback
+                          setTimeout(() => {
+                              if (this.playerManager.getPlayerState() === cast.framework.messages.PlayerState.IDLE) {
+                                  this.playerManager.play();
+                                  this.log(`✅ Started playback after media load`, 'success');
+                              }
+                          }, 1000);
+                      } catch (error) {
+                          this.log(`❌ Failed to start playback: ${error.message}`, 'error');
+                      }
+                  }
 
                   // Handle chapter seeking ONLY for legacy format
                   // In new format (isFullTrack=true), Android app handles absolute positioning
