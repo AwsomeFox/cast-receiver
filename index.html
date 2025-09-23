@@ -1097,16 +1097,24 @@
                 if (!mediaInfo || !mediaInfo.customData) return;
 
                 const customData = mediaInfo.customData;
+
+                // Handle new format (isFullTrack) vs legacy format (isChapter)
+                const isNewFormat = customData.isFullTrack === true;
+                const isLegacyFormat = customData.isChapter === true;
+
                 this.chapterData = {
-                    startMs: customData.startMs || 0,
-                    endMs: customData.endMs || 0,
-                    isChapter: customData.isChapter || false,
+                    // For new format, we don't use startMs/endMs since we rely on absolute positioning
+                    startMs: isNewFormat ? 0 : (customData.startMs || 0),
+                    endMs: isNewFormat ? mediaInfo.streamDuration : (customData.endMs || 0),
+                    isChapter: isNewFormat ? true : (customData.isChapter || false),
+                    isFullTrack: isNewFormat,
                     trackNumber: customData.trackNumber || 1,
                     totalTracks: customData.totalTracks || 1,
-                    chapterTitle: mediaInfo.metadata?.title || `Chapter ${customData.trackNumber}`
+                    chapterTitle: mediaInfo.metadata?.title || `Chapter ${customData.trackNumber || 1}`
                 };
 
                 this.log(`📑 Chapter: ${this.chapterData.chapterTitle} (${this.chapterData.trackNumber}/${this.chapterData.totalTracks})`, 'info');
+                this.log(`📊 Format: ${isNewFormat ? 'New (Full Track)' : 'Legacy (Clipped)'}`, 'info');
             }
 
             buildChapterQueue() {
@@ -1126,13 +1134,22 @@
                     // Calculate absolute start time for this chapter
                     this.chapterStartTimes[index] = cumulativeTime;
 
-                    // Get chapter duration from clipping data or stream duration
+                    // Get chapter duration - handle both new and legacy formats
                     let chapterDurationMs = 0;
-                    if (customData.startMs !== undefined && customData.endMs !== undefined) {
+
+                    if (customData.chapterDurationMs !== undefined) {
+                        // New format: explicit chapter duration
+                        chapterDurationMs = customData.chapterDurationMs;
+                    } else if (customData.chapterStartMs !== undefined && customData.chapterEndMs !== undefined) {
+                        // New format: calculate from chapter boundaries
+                        chapterDurationMs = customData.chapterEndMs - customData.chapterStartMs;
+                    } else if (customData.startMs !== undefined && customData.endMs !== undefined) {
+                        // Legacy format: clipping data
                         chapterDurationMs = customData.endMs - customData.startMs;
                     } else {
-                        // Fallback to stream duration if no clipping data
+                        // Last resort: use stream duration (this won't be accurate for chapters)
                         chapterDurationMs = media.streamDuration || 0;
+                        this.log(`⚠️ No chapter duration info for chapter ${index + 1}, using stream duration`, 'warn');
                     }
 
                     cumulativeTime += chapterDurationMs;
@@ -1184,24 +1201,28 @@
                     this.updateMediaDisplay(mediaInfo);
                     this.extractChapterData(mediaInfo);
 
-                    // Handle chapter seeking if this is a chapter with start time
+                    // Handle chapter seeking ONLY for legacy format
+                    // In new format (isFullTrack=true), Android app handles absolute positioning
                     if (mediaInfo.customData &&
                         mediaInfo.customData.isChapter &&
+                        !mediaInfo.customData.isFullTrack && // Only for legacy format
                         mediaInfo.customData.startMs !== undefined &&
                         mediaInfo.customData.startMs > 0) {
 
                         const seekTimeSeconds = mediaInfo.customData.startMs / 1000;
-                        this.log(`🎯 Chapter starts at ${seekTimeSeconds}s, seeking...`, 'info');
+                        this.log(`🎯 [Legacy] Chapter starts at ${seekTimeSeconds}s, seeking...`, 'info');
 
                         // Seek to chapter start time
                         setTimeout(() => {
                             try {
                                 this.playerManager.seek(seekTimeSeconds);
-                                this.log(`✅ Seeked to chapter start: ${seekTimeSeconds}s`, 'success');
+                                this.log(`✅ [Legacy] Seeked to chapter start: ${seekTimeSeconds}s`, 'success');
                             } catch (error) {
-                                this.log(`❌ Failed to seek to chapter start: ${error.message}`, 'error');
+                                this.log(`❌ [Legacy] Failed to seek to chapter start: ${error.message}`, 'error');
                             }
                         }, 500); // Small delay to ensure media is ready
+                    } else if (mediaInfo.customData && mediaInfo.customData.isFullTrack) {
+                        this.log(`📍 [New Format] Using absolute positioning - no receiver-side seeking needed`, 'info');
                     }
                 }
 
