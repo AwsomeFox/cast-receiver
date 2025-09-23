@@ -1,8 +1,8 @@
-# GitHub Pages configuration for Cast Receiver
-title: Custom Cast Receiver
-description: A custom Google Cast receiver application hosted on GitHub Pages
-url: "https://awsomefox.github.io"
-baseurl: "/cast-receiver"
+# GitHub Pages configuration for Audiobookshelf Cast Receiver Styles
+title: Audiobookshelf Cast Receiver Styles
+description: Custom CSS styling for Google Cast receivers, designed for Audiobookshelf audiobook playback
+url: "https://cast.awsomefox.com"
+baseurl: ""
 
 # Build settings
 markdown: kramdown
